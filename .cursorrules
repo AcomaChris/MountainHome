@@ -1,0 +1,111 @@
+# Cursor Rules for Mountain Home Project
+
+## Project Overview
+Mountain Home is a 2D hex-based board game built with Lua and the Love2D framework. Players manage a homestead through 12 months of the year, making decisions about building, upgrading, and maintaining their property. Game rules and mechanics will be developed iteratively.
+
+## Implementation Approach
+- Break all changes into small, incremental steps
+- Implement one function, component, or feature at a time before moving to the next
+- After each change, pause and explain what you just did before proceeding
+- Ask for confirmation before moving to the next step if the change is significant
+
+## Code Style & Naming Conventions
+- Language: Lua with Love2D framework
+- Use snake_case for variables and functions (e.g., `player_position`, `draw_hex_grid()`)
+- Use PascalCase for tables/classes that act as objects (e.g., `HexGrid`, `Homestead`)
+- Use UPPER_SNAKE_CASE for constants (e.g., `MONTHS_IN_YEAR`, `HEX_SIZE`)
+- Prefix private/internal functions with underscore (e.g., `_calculate_neighbor()`)
+
+## Code Comments
+- Add brief, functional comments that explain what the code does and why it matters
+- Focus comments on helping someone learn - explain the purpose, not just restate the code
+- Be direct and concise. Avoid filler words
+- Comment game logic and mechanics especially clearly since rules are being developed
+
+Example:
+```lua
+-- Store the current season to determine which resources are available
+-- Winter (months 11-12, 1-2) limits building options
+local current_season = _get_season(current_month)
+```
+
+## Architecture & Technology
+- Use Lua and Love2D's built-in capabilities as much as possible
+- Before suggesting external libraries, explore if functionality can be built with existing tools
+- Develop new functionality atomically and modularly
+- Keep game state, rendering, and input handling separate where possible
+- Use Love2D callbacks appropriately (love.load, love.update, love.draw, etc.)
+
+## Testing Requirements
+- Write tests as features are developed, not after
+- Use a Lua testing framework (suggest luaunit or busted)
+- Test game logic and state management separately from rendering
+- Include tests for:
+  - Game mechanics and rules
+  - State transitions (month changes, season changes)
+  - Building placement and validation
+  - Resource calculations
+- Keep tests simple and readable for learning purposes
+
+## Documentation Standards
+- **Code Comments**: Add functional comments explaining what and why (as shown above)
+- **Function Descriptions**: Document all public functions with:
+  - Brief description of purpose
+  - Parameters and their types
+  - Return values and their types
+  - Example usage when helpful
+- **README Updates**: Update README.md when:
+  - Adding new game mechanics or features
+  - Changing how the game is played
+  - Adding setup or installation steps
+  - Documenting controls or user interactions
+
+Example function documentation:
+```lua
+-- Calculates which hexes are adjacent to the given position
+-- @param x number: The x coordinate of the hex
+-- @param y number: The y coordinate of the hex
+-- @return table: Array of neighbor hex positions {x, y}
+function get_hex_neighbors(x, y)
+```
+
+## Communication Style
+- Assume the user is learning programming and game development
+- Explain concepts in plain language without jargon
+- When technical terms are necessary, define them briefly in parentheses
+- Before implementing game mechanics, explain the architectural approach and why it's a good choice
+- Ask questions when there are multiple valid approaches, and explain the tradeoffs in simple terms
+- Proactively suggest improvements to code structure and explain why they matter
+
+## Game Development Considerations
+- Game rules are evolving - document assumptions and ask for clarification on mechanics
+- When implementing new features, consider how they fit into the month/season cycle
+- Think about game state persistence and save/load functionality early
+- Consider performance for hex grid rendering and updates
+- Plan for scalability as new building types and mechanics are added
+
+## File Organization & Structure
+- Organize code into logical modules (e.g., `hex_grid.lua`, `homestead.lua`, `game_state.lua`)
+- Keep Love2D entry point in `main.lua` or `conf.lua`
+- Place utility functions in a `utils/` directory
+- Store game data/config in a `data/` directory
+- Keep assets organized: `assets/images/`, `assets/audio/`, `assets/fonts/`
+- Use descriptive file names that match their primary purpose
+
+## Error Handling & Debugging
+- Use `assert()` for critical assumptions that should never fail in production
+- Use `print()` or `love.graphics.print()` for debugging output during development
+- Handle edge cases explicitly (e.g., invalid hex coordinates, out-of-bounds array access)
+- When errors occur, provide clear messages that help identify the problem
+- Consider adding a debug mode flag to enable/disable verbose logging
+
+## Dependencies & External Libraries
+- Document any external libraries used and their versions
+- Prefer LuaRocks for dependency management if needed
+- Keep dependencies minimal - only add when Love2D built-ins aren't sufficient
+- Document installation steps for any required dependencies in README.md
+
+## Version Control Practices
+- Write clear, descriptive commit messages that explain what changed and why
+- Commit small, logical changes rather than large batches
+- Use conventional commit prefixes when helpful (e.g., "feat:", "fix:", "docs:")

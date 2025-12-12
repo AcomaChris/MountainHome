@@ -24,6 +24,11 @@ local HOVER_RAISE_AMOUNT = 10  -- X: How many pixels the hex moves up when hover
 local HOVER_SCALE_AMOUNT = 8   -- Y: How many pixels the hex grows/shrinks (added to base size)
 local HOVER_ANIMATION_TIME = 1.0  -- Z: Time in seconds for one complete animation cycle
 
+-- Title and font settings
+local TITLE_TEXT = "Mountain Home!"  -- Title text to display
+local TITLE_FONT_PATH = "The Foregen Rough One.ttf"  -- Path to custom font file (TTF or OTF), or nil to use default font
+local TITLE_FONT_SIZE = 48  -- Size of the title font in pixels
+
 -- ============================================================================
 -- GAME STATE
 -- ============================================================================
@@ -39,6 +44,10 @@ local HEX_PLAYABLE_HEIGHT = 22  -- Actual hexagon height from center (44px total
 -- Hover state tracking
 local hovered_hex_index = nil  -- Index of the hex currently being hovered (nil if none)
 local hover_animation_time = 0  -- Current time in the animation cycle (0 to HOVER_ANIMATION_TIME)
+
+-- Fonts
+local title_font = nil  -- Font object for the title (loaded in love.load)
+local default_font = nil  -- Default font for debug text (loaded in love.load)
 
 -- ============================================================================
 -- HEX COORDINATE FUNCTIONS
@@ -117,6 +126,27 @@ end
 function love.load()
     -- Set window title
     love.window.setTitle("Hex Map Example")
+    
+    -- Load default font for debug text (size 12)
+    default_font = love.graphics.newFont(12)
+    
+    -- Load custom font if specified, otherwise use default font
+    -- Love2D supports TTF and OTF font formats
+    if TITLE_FONT_PATH and TITLE_FONT_PATH ~= "" then
+        local success, font = pcall(function()
+            return love.graphics.newFont(TITLE_FONT_PATH, TITLE_FONT_SIZE)
+        end)
+        if success then
+            title_font = font
+            print("Loaded custom font: " .. TITLE_FONT_PATH)
+        else
+            print("Warning: Could not load font '" .. TITLE_FONT_PATH .. "', using default font")
+            title_font = love.graphics.newFont(TITLE_FONT_SIZE)
+        end
+    else
+        -- Use default font at specified size
+        title_font = love.graphics.newFont(TITLE_FONT_SIZE)
+    end
     
     -- Load the hex tile sprite
     -- Sprite is copied into this example folder for self-contained example
@@ -208,12 +238,21 @@ function love.draw()
         )
     end
     
+    -- Draw title at the top center of the screen
+    love.graphics.setFont(title_font)
+    love.graphics.setColor(1, 1, 1, 1)  -- White color for title
+    local title_width = title_font:getWidth(TITLE_TEXT)
+    local screen_width = love.graphics.getWidth()
+    local title_x = (screen_width - title_width) / 2  -- Center horizontally
+    local title_y = 20  -- Position from top
+    love.graphics.print(TITLE_TEXT, title_x, title_y)
+    
     -- Draw debug info (optional - shows hex coordinates)
     love.graphics.setColor(1, 1, 1, 0.7)  -- White with transparency
-    local font = love.graphics.getFont()
-    love.graphics.print("Hex Map Example - " .. #hexes .. " tiles", 10, 10)
-    love.graphics.print("Spacing X: " .. HEX_SPACING_X .. " | Spacing Y: " .. HEX_SPACING_Y, 10, 30)
-    love.graphics.print("Adjust HEX_SPACING_X and HEX_SPACING_Y in main.lua to change spacing", 10, 50)
+    love.graphics.setFont(default_font)  -- Use default font for debug text
+    love.graphics.print("Hex Map Example - " .. #hexes .. " tiles", 10, title_y + TITLE_FONT_SIZE + 20)
+    love.graphics.print("Spacing X: " .. HEX_SPACING_X .. " | Spacing Y: " .. HEX_SPACING_Y, 10, title_y + TITLE_FONT_SIZE + 40)
+    love.graphics.print("Adjust HEX_SPACING_X and HEX_SPACING_Y in main.lua to change spacing", 10, title_y + TITLE_FONT_SIZE + 60)
     love.graphics.setColor(1, 1, 1, 1)  -- Reset to opaque white
 end
 

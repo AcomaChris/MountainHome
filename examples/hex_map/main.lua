@@ -23,6 +23,8 @@ local OFFSET_Y = 300  -- Y position of the center hex
 local HOVER_RAISE_AMOUNT = 10  -- X: How many pixels the hex moves up when hovered
 local HOVER_SCALE_AMOUNT = 8   -- Y: How many pixels the hex grows/shrinks (added to base size)
 local HOVER_ANIMATION_TIME = 1.0  -- Z: Time in seconds for one complete animation cycle
+local HOVER_LIGHTEN_AMOUNT = 1.0  -- Lightening intensity (0.0 = no lightening, 1.0 = maximum brightness)
+                                    -- Adjust this value to control how bright the hex becomes when hovered
 
 -- Title and font settings
 local TITLE_TEXT = "Mountain Home!"  -- Title text to display
@@ -207,6 +209,7 @@ function love.draw()
         local scale = 1.0
         
         -- Apply hover animation if this hex is being hovered
+        local lighten_factor = 0.0  -- Default: no lightening
         if i == hovered_hex_index then
             -- Calculate animation progress (0 to 1, looping)
             -- Use sine wave for smooth oscillation
@@ -223,10 +226,15 @@ function love.draw()
             -- Scale is calculated as: base size + animation amount, divided by base size
             local scale_addition = normalized * HOVER_SCALE_AMOUNT
             scale = (SPRITE_WIDTH + scale_addition) / SPRITE_WIDTH
+            
+            -- Calculate lightening factor (0 to HOVER_LIGHTEN_AMOUNT based on animation)
+            -- Lightens as the hex grows, returns to normal as it shrinks
+            lighten_factor = normalized * HOVER_LIGHTEN_AMOUNT
         end
         
         -- Draw the sprite centered at the calculated position
         -- Apply scale and offset for centering
+        love.graphics.setColor(1, 1, 1, 1)  -- Base color (white)
         love.graphics.draw(
             hex_sprite,
             draw_x,
@@ -236,6 +244,28 @@ function love.draw()
             SPRITE_WIDTH / 2,  -- origin x (center)
             SPRITE_HEIGHT / 2  -- origin y (center)
         )
+        
+        -- Apply lightening effect by drawing a white overlay with transparency
+        -- The lighten_factor controls how much white to blend in
+        if lighten_factor > 0 then
+            -- Use additive blending to lighten: draw white with alpha based on lighten_factor
+            -- This creates a brightening effect that works with any sprite color
+            love.graphics.setBlendMode("add")
+            love.graphics.setColor(lighten_factor, lighten_factor, lighten_factor, lighten_factor)
+            love.graphics.draw(
+                hex_sprite,
+                draw_x,
+                draw_y,
+                0,  -- rotation
+                scale, scale,  -- scale x, scale y
+                SPRITE_WIDTH / 2,  -- origin x (center)
+                SPRITE_HEIGHT / 2  -- origin y (center)
+            )
+            love.graphics.setBlendMode("alpha")  -- Reset to default blending
+        end
+        
+        -- Reset color to white for next hex (or other graphics)
+        love.graphics.setColor(1, 1, 1, 1)
     end
     
     -- Draw title at the top center of the screen
@@ -252,7 +282,8 @@ function love.draw()
     love.graphics.setFont(default_font)  -- Use default font for debug text
     love.graphics.print("Hex Map Example - " .. #hexes .. " tiles", 10, title_y + TITLE_FONT_SIZE + 20)
     love.graphics.print("Spacing X: " .. HEX_SPACING_X .. " | Spacing Y: " .. HEX_SPACING_Y, 10, title_y + TITLE_FONT_SIZE + 40)
-    love.graphics.print("Adjust HEX_SPACING_X and HEX_SPACING_Y in main.lua to change spacing", 10, title_y + TITLE_FONT_SIZE + 60)
+    love.graphics.print("Lighten: " .. HOVER_LIGHTEN_AMOUNT .. " | Raise: " .. HOVER_RAISE_AMOUNT .. " | Scale: " .. HOVER_SCALE_AMOUNT, 10, title_y + TITLE_FONT_SIZE + 60)
+    love.graphics.print("Adjust HOVER_* variables in main.lua to customize hover effects", 10, title_y + TITLE_FONT_SIZE + 80)
     love.graphics.setColor(1, 1, 1, 1)  -- Reset to opaque white
 end
 

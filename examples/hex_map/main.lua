@@ -19,6 +19,11 @@ local GRID_RADIUS = 5  -- Creates a radius-5 hex grid (11 hexes across at widest
 local OFFSET_X = 400  -- X position of the center hex
 local OFFSET_Y = 300  -- Y position of the center hex
 
+-- Hover animation settings
+local HOVER_RAISE_AMOUNT = 10  -- X: How many pixels the hex moves up when hovered
+local HOVER_SCALE_AMOUNT = 8   -- Y: How many pixels the hex grows/shrinks (added to base size)
+local HOVER_ANIMATION_TIME = 1.0  -- Z: Time in seconds for one complete animation cycle
+
 -- ============================================================================
 -- GAME STATE
 -- ============================================================================
@@ -30,6 +35,10 @@ local hexes = {}  -- Table to store all hex positions
 local SPRITE_WIDTH = 64
 local SPRITE_HEIGHT = 64
 local HEX_PLAYABLE_HEIGHT = 22  -- Actual hexagon height from center (44px total)
+
+-- Hover state tracking
+local hovered_hex_index = nil  -- Index of the hex currently being hovered (nil if none)
+local hover_animation_time = 0  -- Current time in the animation cycle (0 to HOVER_ANIMATION_TIME)
 
 -- ============================================================================
 -- HEX COORDINATE FUNCTIONS
@@ -70,6 +79,36 @@ function generate_hex_coordinates()
     return coords
 end
 
+-- Check if a point (mouse position) is over a hex
+-- Uses simple distance check from hex center
+-- @param mx number: Mouse X position
+-- @param my number: Mouse Y position
+-- @param hex table: Hex object with x, y properties
+-- @return boolean: True if mouse is over the hex
+function is_mouse_over_hex(mx, my, hex)
+    -- Calculate distance from mouse to hex center
+    local dx = mx - hex.x
+    local dy = my - hex.y
+    local distance = math.sqrt(dx * dx + dy * dy)
+    
+    -- Check if within hex radius (using half the sprite size as radius)
+    return distance <= SPRITE_WIDTH / 2
+end
+
+-- Find which hex (if any) the mouse is currently over
+-- @param mx number: Mouse X position
+-- @param my number: Mouse Y position
+-- @return number|nil: Index of hovered hex, or nil if none
+function find_hovered_hex(mx, my)
+    -- Check hexes in reverse order (top to bottom) so top hexes are checked first
+    for i = #hexes, 1, -1 do
+        if is_mouse_over_hex(mx, my, hexes[i]) then
+            return i
+        end
+    end
+    return nil
+end
+
 -- ============================================================================
 -- LOVE2D CALLBACKS
 -- ============================================================================
@@ -97,6 +136,12 @@ function love.load()
         })
     end
     
+    -- Sort hexes by Y coordinate (top to bottom) for correct rendering order
+    -- Hexes at the top should be drawn first, so lower Y values come first
+    table.sort(hexes, function(a, b)
+        return a.y < b.y
+    end)
+    
     print("Generated " .. #hexes .. " hex tiles")
     print("Adjust HEX_SPACING_X and HEX_SPACING_Y at the top of main.lua to change spacing")
 end
@@ -104,19 +149,62 @@ end
 -- Called every frame to update game state
 -- @param dt number: Delta time (seconds since last frame)
 function love.update(dt)
-    -- No updates needed for static map
+    -- Get mouse position
+    local mx, my = love.mouse.getPosition()
+    
+    -- Check which hex is being hovered
+    hovered_hex_index = find_hovered_hex(mx, my)
+    
+    -- Update animation time if a hex is hovered
+    if hovered_hex_index then
+        hover_animation_time = hover_animation_time + dt
+        -- Loop the animation time back to 0 when it exceeds the cycle time
+        if hover_animation_time >= HOVER_ANIMATION_TIME then
+            hover_animation_time = hover_animation_time - HOVER_ANIMATION_TIME
+        end
+    else
+        -- Reset animation time when not hovering
+        hover_animation_time = 0
+    end
 end
 
 -- Called every frame to draw graphics
 function love.draw()
     -- Draw each hex tile
-    for _, hex in ipairs(hexes) do
+    for i, hex in ipairs(hexes) do
+        local draw_x = hex.x
+        local draw_y = hex.y
+        local scale = 1.0
+        
+        -- Apply hover animation if this hex is being hovered
+        if i == hovered_hex_index then
+            -- Calculate animation progress (0 to 1, looping)
+            -- Use sine wave for smooth oscillation
+            local progress = hover_animation_time / HOVER_ANIMATION_TIME
+            local sine_value = math.sin(progress * math.pi * 2)
+            
+            -- Convert sine (-1 to 1) to 0 to 1 range for smoother animation
+            local normalized = (sine_value + 1) / 2
+            
+            -- Apply raise effect (move up by HOVER_RAISE_AMOUNT pixels)
+            draw_y = draw_y - (normalized * HOVER_RAISE_AMOUNT)
+            
+            -- Apply scale effect (grow/shrink by HOVER_SCALE_AMOUNT pixels)
+            -- Scale is calculated as: base size + animation amount, divided by base size
+            local scale_addition = normalized * HOVER_SCALE_AMOUNT
+            scale = (SPRITE_WIDTH + scale_addition) / SPRITE_WIDTH
+        end
+        
         -- Draw the sprite centered at the calculated position
-        -- The sprite is 64x64, so we offset by half to center it
+        -- Apply scale and offset for centering
         love.graphics.draw(
             hex_sprite,
-            hex.x - SPRITE_WIDTH / 2,
-            hex.y - SPRITE_HEIGHT / 2
+            draw_x,
+            draw_y,
+            0,  -- rotation
+            scale, scale,  -- scale x, scale y
+            SPRITE_WIDTH / 2,  -- origin x (center)
+            SPRITE_HEIGHT / 2  -- origin y (center)
         )
     end
     

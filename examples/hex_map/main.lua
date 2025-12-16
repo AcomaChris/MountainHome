@@ -10,7 +10,7 @@
 -- Increase these values to space tiles further apart
 -- Decrease to bring them closer together
 local HEX_SPACING_X = 32  -- Horizontal spacing between hex centers
-local HEX_SPACING_Y = 32  -- Vertical spacing between hex centers
+local HEX_SPACING_Y = 24  -- Vertical spacing between hex centers
 
 -- Grid size - how many hexes in each direction
 local GRID_RADIUS = 5  -- Creates a radius-5 hex grid (11 hexes across at widest)

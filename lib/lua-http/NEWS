@@ -1,0 +1,40 @@
+0.4 - 2021-02-06
+
+  - Support multiple elliptic curves under OpenSSL 1.1.1+ (#150)
+  - Improve support for Lua 5.4 (not longer require bit library to be installed) (#180)
+  - Ignore delayed RST_STREAM frames in HTTP 2 (#145)
+
+
+0.3 - 2019-02-13
+
+  - Fix incorrect Sec-WebSocket-Protocol negotiation
+  - Fix incorrect timeout handling in `websocket:receive()`
+  - Add workaround to allow being required in openresty (#98)
+  - Add http.tls.old_cipher_list (#112)
+  - Add http.cookie module (#117)
+  - Improvements to http.hsts module (#119)
+  - Add `options` argument form to `stream:write_body_from_file()` (#125)
+
+
+0.2 - 2017-05-28
+
+  - Remove broken http.server `.client_timeout` option (replaced with `.connection_setup_timeout`)
+  - Fix http1 pipelining locks
+  - Miscellaneous http2 fixes
+  - HTTP 2 streams no longer have to be used in order of creation
+  - No longer raise decode errors in hpack module
+  - Fix `hpack:lookup_index()` to treat static entries without values as empty string
+  - Fix HTTP 1 client in locales with non-"." decimal separator
+  - Add h1_stream.max_header_lines property to prevent infinite list of headers
+  - New '.bind' option for requests and http.client module
+
+
+0.1 - 2016-12-17
+
+  - Support for HTTP versions 1, 1.1 and 2
+  - Provides both client and server APIs
+  - Friendly request API with sensible defaults for security
+  - All operations are fully non-blocking and can be managed with cqueues
+  - Support for WebSockets (client and server), including ping/pong, binary data transfer and TLS encryption.
+  - Transport Layer Security (TLS) - lua-http supports HTTPS and WSS via luaossl.
+  - luasocket compatibility API if you're looking to use lua-http with older projects.

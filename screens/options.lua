@@ -15,6 +15,9 @@ function OptionsScreen.enter(ctx)
     local btn_w, btn_h = 220, 44
     
     OptionsScreen.buttons = {
+        UIButton.new("Test HTTP/JSON Libraries", (w - btn_w) / 2, h * 0.5, btn_w, btn_h, function()
+            bus.emit("options:test_libraries", { from = "options" })
+        end),
         UIButton.new("Back to Menu", (w - btn_w) / 2, h - 80, btn_w, btn_h, function()
             bus.emit("options:back", { from = "options" })
         end),
@@ -30,6 +33,9 @@ function OptionsScreen.draw()
     
     love.graphics.setColor(0.8, 0.8, 0.9)
     love.graphics.printf("(Placeholder: Settings coming soon)", 0, h * 0.4, w, "center")
+    
+    love.graphics.setColor(0.7, 0.9, 0.7)
+    love.graphics.printf("Click 'Test HTTP/JSON Libraries' to verify dependencies", 0, h * 0.45, w, "center")
     
     for _, btn in ipairs(OptionsScreen.buttons) do
         btn:draw()

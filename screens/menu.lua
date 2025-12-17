@@ -19,13 +19,27 @@ function MenuScreen.enter(ctx)
     -- Layout buttons vertically centered
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
     local btn_w, btn_h = 220, 44
-    local start_y = h * 0.5
+    local start_y = h * 0.4
+    local btn_spacing = 50
+    
     MenuScreen.buttons = {
-        UIButton.new("Continue to Intro", (w - btn_w) / 2, start_y, btn_w, btn_h, function()
-            bus.emit("menu:continue", { from = "menu" })
+        UIButton.new("New Game", (w - btn_w) / 2, start_y, btn_w, btn_h, function()
+            bus.emit("menu:new_game", { from = "menu" })
         end),
-        UIButton.new("Quit", (w - btn_w) / 2, start_y + 60, btn_w, btn_h, function()
-            love.event.quit()
+        UIButton.new("Load Game", (w - btn_w) / 2, start_y + btn_spacing, btn_w, btn_h, function()
+            bus.emit("menu:load_game", { from = "menu" })
+        end),
+        UIButton.new("Achievements", (w - btn_w) / 2, start_y + btn_spacing * 2, btn_w, btn_h, function()
+            bus.emit("menu:achievements", { from = "menu" })
+        end),
+        UIButton.new("Options", (w - btn_w) / 2, start_y + btn_spacing * 3, btn_w, btn_h, function()
+            bus.emit("menu:options", { from = "menu" })
+        end),
+        UIButton.new("Cheats", (w - btn_w) / 2, start_y + btn_spacing * 4, btn_w, btn_h, function()
+            bus.emit("menu:cheats", { from = "menu" })
+        end),
+        UIButton.new("Quit", (w - btn_w) / 2, start_y + btn_spacing * 5, btn_w, btn_h, function()
+            bus.emit("menu:quit", { from = "menu" })
         end),
     }
 end

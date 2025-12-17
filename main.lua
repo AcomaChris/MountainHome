@@ -2,7 +2,12 @@
 -- Entry point for Love2D; wires screen manager and initial screen.
 
 -- Extend Lua search path for local libs and screens
-package.path = package.path .. ";lib/?.lua;lib/?/init.lua;lib/?/?.lua;?/init.lua;?/?.lua"
+-- Supports nested modules like lunajson.decoder and http.request
+-- Pattern: lib/?.lua matches lib/module.lua
+-- Pattern: lib/?/?.lua matches lib/module/submodule.lua (for lunajson.decoder)
+-- Pattern: lib/?/?/?.lua matches lib/module/module/submodule.lua (for lunajson structure)
+-- Pattern: lib/lua-http/?.lua matches lib/lua-http/http/request.lua (for lua-http)
+package.path = package.path .. ";lib/?.lua;lib/?/init.lua;lib/?/?.lua;lib/?/?/?.lua;lib/lua-http/?.lua;?/init.lua;?/?.lua"
 
 local screen_manager = require('lib.screen_manager')
 local menu_screen = require('screens.menu')
@@ -16,6 +21,9 @@ local cheats_screen = require('screens.cheats')
 local quit_screen = require('screens.quit')
 local bus = require('lib.event_bus')
 local log = require('lib.logger')
+
+-- Test module for HTTP/JSON (will gracefully handle missing libraries)
+local test_http_json_available, test_http_json = pcall(require, 'lib.test_http_json')
 
 -- Called once when the game starts
 function love.load()
@@ -95,6 +103,33 @@ function love.load()
         log.info("quit:cancel")
         screen_manager.go_to("menu")
     end)
+    
+    -- Wire test events for HTTP/JSON testing
+    if test_http_json_available then
+        bus.subscribe("test:start", function(payload)
+            log.info("test:start", payload)
+        end)
+        bus.subscribe("test:json_result", function(payload)
+            log.info("test:json_result", payload)
+        end)
+        bus.subscribe("test:http_result", function(payload)
+            log.info("test:http_result", payload)
+        end)
+        bus.subscribe("test:complete", function(payload)
+            log.info("test:complete", payload)
+        end)
+        bus.subscribe("options:test_libraries", function()
+            log.info("options:test_libraries")
+            if test_http_json then
+                test_http_json.run_all()
+            end
+        end)
+        
+        -- Run test on startup (will log results)
+        test_http_json.run_all()
+    else
+        log.info("test:module_unavailable", { note = "lib/test_http_json.lua not found or has errors" })
+    end
 
     -- Start at intro
     screen_manager.go_to("intro")

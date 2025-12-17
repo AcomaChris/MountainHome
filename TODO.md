@@ -82,6 +82,14 @@ This file tracks tasks, ideas, and progress across different aspects of the proj
 - [ ] Add simple navigation flow between screens (no gameplay logic)
 - [ ] Add placeholder UI elements/text to validate layout/navigation
 
+#### Phase 0 Acceptance Criteria
+- [ ] All listed screens load and can be navigated via menu/options/return flows
+- [ ] Event bus exists with subscribe/unsubscribe/emit and is used for screen transitions
+- [ ] Screen manager calls enter/exit/update/draw per screen; transitions emit `screen:pre_exit`, `screen:pre_enter`, `screen:entered`
+- [ ] Love callbacks are routed through screen manager; input works on current screen
+- [ ] Programmer art/placeholder text visible on each screen to confirm routing
+- [ ] No runtime errors when cycling through all screens in one session
+
 ### Phase 1 — AI Behavior Engine Integration
 - [ ] Review `reference/behaviorengine/Artificial Agency API Reference.html` and `reference/behaviorengine/openapi.json`
 - [ ] Add HTTP + JSON deps (lua-http, lunajson) and package.path wiring

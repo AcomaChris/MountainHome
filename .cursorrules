@@ -98,6 +98,7 @@ function get_hex_neighbors(x, y)
 - Handle edge cases explicitly (e.g., invalid hex coordinates, out-of-bounds array access)
 - When errors occur, provide clear messages that help identify the problem
 - Consider adding a debug mode flag to enable/disable verbose logging
+- Emit timestamped info logs for player actions, screen transitions, and event bus messages so AI behavior engine can trace what happened (event name + key variables/results)
 
 ## Dependencies & External Libraries
 - Document any external libraries used and their versions

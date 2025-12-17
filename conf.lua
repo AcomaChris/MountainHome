@@ -4,6 +4,8 @@
 function love.conf(t)
     -- Set the window title
     t.title = "Mountain Home"
+    -- Set identity for save directory (used by logger for log files)
+    t.identity = "MountainHome"
     
     -- Set initial window size
     t.window.width = 800

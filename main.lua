@@ -1,39 +1,68 @@
 -- Mountain Home - Main Game File
--- This is the entry point for the Love2D game engine
+-- Entry point for Love2D; wires screen manager and initial screen.
+
+-- Extend Lua search path for local libs and screens
+package.path = package.path .. ";lib/?.lua;lib/?/init.lua;lib/?/?.lua;?/init.lua;?/?.lua"
+
+local screen_manager = require('lib.screen_manager')
+local menu_screen = require('screens.menu')
+local intro_screen = require('screens.intro')
+local bus = require('lib.event_bus')
+local log = require('lib.logger')
 
 -- Called once when the game starts
--- Use this to initialize game state, load assets, etc.
 function love.load()
-    -- Set up the window title
     love.window.setTitle("Mountain Home")
+
+    -- Register screens (expand as we add more)
+    screen_manager.register_screen("menu", menu_screen)
+    screen_manager.register_screen("intro", intro_screen)
+
+    -- Wire simple nav: menu -> intro -> menu
+    bus.subscribe("menu:continue", function()
+        log.info("menu:continue")
+        screen_manager.go_to("intro")
+    end)
+    bus.subscribe("intro:done", function()
+        log.info("intro:done")
+        screen_manager.go_to("menu")
+    end)
+
+    -- Start at menu
+    screen_manager.go_to("menu")
 end
 
--- Called every frame to update game logic
--- dt is the time elapsed since the last frame (delta time)
+-- Forward Love callbacks to the screen manager
 function love.update(dt)
-    -- No game logic needed yet - just displaying text
+    screen_manager.update(dt)
 end
 
--- Called every frame to draw graphics to the screen
 function love.draw()
-    -- Get the window dimensions so we can center the text
-    local window_width = love.graphics.getWidth()
-    local window_height = love.graphics.getHeight()
-    
-    -- Set the text color to white
-    love.graphics.setColor(1, 1, 1, 1)  -- RGBA values from 0 to 1
-    
-    -- Calculate text position to center it on screen
-    local text = "Mountain Home"
-    local font = love.graphics.getFont()
-    local text_width = font:getWidth(text)
-    local text_height = font:getHeight(text)
-    
-    local x = (window_width - text_width) / 2
-    local y = (window_height - text_height) / 2
-    
-    -- Draw the text centered on screen
-    love.graphics.print(text, x, y)
+    screen_manager.draw()
+end
+
+function love.keypressed(key, scancode, isrepeat)
+    screen_manager.keypressed(key, scancode, isrepeat)
+end
+
+function love.textinput(text)
+    screen_manager.textinput(text)
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+    screen_manager.mousepressed(x, y, button, istouch, presses)
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+    screen_manager.mousereleased(x, y, button, istouch, presses)
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+    screen_manager.mousemoved(x, y, dx, dy, istouch)
+end
+
+function love.wheelmoved(x, y)
+    screen_manager.wheelmoved(x, y)
 end
 
 

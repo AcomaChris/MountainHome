@@ -35,6 +35,7 @@ local current_season = _get_season(current_month)
 - Develop new functionality atomically and modularly
 - Keep game state, rendering, and input handling separate where possible
 - Use Love2D callbacks appropriately (love.load, love.update, love.draw, etc.)
+- Input requirement: all primary flows must be usable with mouse and/or touch (no keyboard dependency). Provide clickable/touchable UI elements for navigation and actions.
 
 ## Testing Requirements
 - Write tests as features are developed, not after

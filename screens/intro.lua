@@ -1,17 +1,28 @@
 -- Placeholder intro screen for Phase 0. Shows simple text and returns to menu on any key.
 
 local bus = require('lib.event_bus')
+local UIButton = require('lib.ui_button')
 
 local IntroScreen = {
     title = "Studio Intro",
-    info = "Press any key to return to menu.",
+    info = "Tap the button to return to menu.",
     timer = 0,
     display_time = 0, -- not used yet; placeholder for future timed sequence
+    buttons = {},
 }
 
 function IntroScreen.enter(ctx)
     IntroScreen.timer = 0
     IntroScreen.last_transition = ctx
+
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local btn_w, btn_h = 220, 44
+    local y = h * 0.5
+    IntroScreen.buttons = {
+        UIButton.new("Back to Menu", (w - btn_w) / 2, y, btn_w, btn_h, function()
+            bus.emit("intro:done", { from = "intro" })
+        end),
+    }
 end
 
 function IntroScreen.update(dt)
@@ -34,11 +45,19 @@ function IntroScreen.draw()
         local msg = string.format("from: %s  to: %s", tostring(IntroScreen.last_transition.from), tostring(IntroScreen.last_transition.to))
         love.graphics.printf(msg, 0, y + 64, w, "center")
     end
+
+    for _, btn in ipairs(IntroScreen.buttons) do
+        btn:draw()
+    end
 end
 
-function IntroScreen.keypressed()
-    -- Emit event to go back to menu
-    bus.emit("intro:done", { from = "intro" })
+function IntroScreen.mousepressed(x, y, button)
+    if button ~= 1 then return end
+    for _, btn in ipairs(IntroScreen.buttons) do
+        if btn:mousepressed(x, y) then
+            return
+        end
+    end
 end
 
 return IntroScreen

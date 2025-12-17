@@ -28,8 +28,8 @@ function love.load()
         screen_manager.go_to("menu")
     end)
 
-    -- Start at menu
-    screen_manager.go_to("menu")
+    -- Start at intro
+    screen_manager.go_to("intro")
 end
 
 -- Forward Love callbacks to the screen manager

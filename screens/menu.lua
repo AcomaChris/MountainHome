@@ -2,17 +2,32 @@
 -- Displays basic text and listens for Enter to continue (emits an event) or Escape to quit.
 
 local bus = require('lib.event_bus')
+local UIButton = require('lib.ui_button')
 
 local MenuScreen = {
     title = "Mountain Home",
     subtitle = "Phase 0 Prototype",
-    info = "Press Enter to continue (event only). Press Esc to quit.",
+    info = "Click a button to navigate.",
+    buttons = {},
 }
 
 -- Called when entering the menu
 function MenuScreen.enter(ctx)
     -- Store last transition for debugging visibility
     MenuScreen.last_transition = ctx
+
+    -- Layout buttons vertically centered
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local btn_w, btn_h = 220, 44
+    local start_y = h * 0.5
+    MenuScreen.buttons = {
+        UIButton.new("Continue to Intro", (w - btn_w) / 2, start_y, btn_w, btn_h, function()
+            bus.emit("menu:continue", { from = "menu" })
+        end),
+        UIButton.new("Quit", (w - btn_w) / 2, start_y + 60, btn_w, btn_h, function()
+            love.event.quit()
+        end),
+    }
 end
 
 function MenuScreen.draw()
@@ -34,14 +49,18 @@ function MenuScreen.draw()
         local msg = string.format("from: %s  to: %s", tostring(MenuScreen.last_transition.from), tostring(MenuScreen.last_transition.to))
         love.graphics.printf(msg, 0, y + 96, w, "center")
     end
+
+    for _, btn in ipairs(MenuScreen.buttons) do
+        btn:draw()
+    end
 end
 
-function MenuScreen.keypressed(key)
-    if key == "escape" then
-        love.event.quit()
-    elseif key == "return" or key == "kpenter" then
-        -- Emit an event that can be picked up by other systems/screens later.
-        bus.emit("menu:continue", { from = "menu" })
+function MenuScreen.mousepressed(x, y, button)
+    if button ~= 1 then return end
+    for _, btn in ipairs(MenuScreen.buttons) do
+        if btn:mousepressed(x, y) then
+            return
+        end
     end
 end
 

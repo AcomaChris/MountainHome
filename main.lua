@@ -13,6 +13,10 @@ local log = require('lib.logger')
 -- Called once when the game starts
 function love.load()
     love.window.setTitle("Mountain Home")
+    
+    -- Set pixel-perfect filtering for pixel art (no anti-aliasing)
+    -- "nearest" keeps hard edges instead of smooth interpolation
+    love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Register screens (expand as we add more)
     screen_manager.register_screen("menu", menu_screen)

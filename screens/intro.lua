@@ -9,11 +9,37 @@ local IntroScreen = {
     timer = 0,
     display_time = 0, -- not used yet; placeholder for future timed sequence
     buttons = {},
+    sprite = nil,
+    sprite_w = 0,
+    sprite_h = 0,
+    spawn_delay = 1.0,
+    pop_duration = 0.4,
+    pop_progress = 0,
+    visible = false,
+    pos = { x = 0, y = 0 },
+    target = nil,
+    start_pos = nil,
+    move_elapsed = 0,
+    move_duration = 0,
+    move_cooldown = 0,
+    moving = false,
 }
 
 function IntroScreen.enter(ctx)
     IntroScreen.timer = 0
     IntroScreen.last_transition = ctx
+    IntroScreen.visible = false
+    IntroScreen.pop_progress = 0
+    IntroScreen.move_elapsed = 0
+    IntroScreen.move_duration = 0
+    IntroScreen.moving = false
+    IntroScreen.move_cooldown = love.math.random(3, 8)
+
+    if not IntroScreen.sprite then
+        IntroScreen.sprite = love.graphics.newImage("RAW/Sprites/Char_McJaggy_Idle00.png")
+        IntroScreen.sprite_w = IntroScreen.sprite:getWidth()
+        IntroScreen.sprite_h = IntroScreen.sprite:getHeight()
+    end
 
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
     local btn_w, btn_h = 220, 44
@@ -23,10 +49,53 @@ function IntroScreen.enter(ctx)
             bus.emit("intro:done", { from = "intro" })
         end),
     }
+
+    -- Start McJaggy at center before first move
+    IntroScreen.pos.x = w * 0.5
+    IntroScreen.pos.y = h * 0.4
 end
 
 function IntroScreen.update(dt)
     IntroScreen.timer = IntroScreen.timer + dt
+    -- Handle delayed spawn with pop-in scale animation
+    if not IntroScreen.visible and IntroScreen.timer >= IntroScreen.spawn_delay then
+        IntroScreen.visible = true
+        IntroScreen.pop_progress = 0
+    end
+    if IntroScreen.visible and IntroScreen.pop_progress < IntroScreen.pop_duration then
+        IntroScreen.pop_progress = math.min(IntroScreen.pop_progress + dt, IntroScreen.pop_duration)
+    end
+
+    -- Random movement every 3-8 seconds with easing and bobbing
+    if IntroScreen.visible then
+        IntroScreen.move_cooldown = IntroScreen.move_cooldown - dt
+        if IntroScreen.move_cooldown <= 0 and not IntroScreen.moving then
+            local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+            local pad = 80
+            IntroScreen.start_pos = { x = IntroScreen.pos.x, y = IntroScreen.pos.y }
+            IntroScreen.target = {
+                x = love.math.random(pad, w - pad),
+                y = love.math.random(pad, h - pad * 1.5)
+            }
+            IntroScreen.move_duration = 0.9
+            IntroScreen.move_elapsed = 0
+            IntroScreen.moving = true
+            IntroScreen.move_cooldown = love.math.random(3, 8)
+        end
+
+        if IntroScreen.moving then
+            IntroScreen.move_elapsed = IntroScreen.move_elapsed + dt
+            local t = math.min(IntroScreen.move_elapsed / IntroScreen.move_duration, 1)
+            local eased = 1 - (1 - t) * (1 - t) -- ease-out quad
+            IntroScreen.pos.x = IntroScreen.start_pos.x + (IntroScreen.target.x - IntroScreen.start_pos.x) * eased
+            IntroScreen.pos.y = IntroScreen.start_pos.y + (IntroScreen.target.y - IntroScreen.start_pos.y) * eased
+            if t >= 1 then
+                IntroScreen.moving = false
+                IntroScreen.pos.x = IntroScreen.target.x
+                IntroScreen.pos.y = IntroScreen.target.y
+            end
+        end
+    end
 end
 
 function IntroScreen.draw()
@@ -48,6 +117,24 @@ function IntroScreen.draw()
 
     for _, btn in ipairs(IntroScreen.buttons) do
         btn:draw()
+    end
+
+    -- Draw McJaggy with pop-in scale and bobbing bounce
+    if IntroScreen.visible and IntroScreen.sprite then
+        local base_scale = IntroScreen.pop_progress / IntroScreen.pop_duration
+        local scale = math.max(0, math.min(base_scale, 1))
+        local bob = math.sin(love.timer.getTime() * 9) * 6
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(
+            IntroScreen.sprite,
+            IntroScreen.pos.x,
+            IntroScreen.pos.y + bob,
+            0,
+            scale,
+            scale,
+            IntroScreen.sprite_w / 2,
+            IntroScreen.sprite_h / 2
+        )
     end
 end
 

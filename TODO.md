@@ -74,21 +74,21 @@ This file tracks tasks, ideas, and progress across different aspects of the proj
 
 ## Phases
 
-### Phase 0 — Core Structure Prototype
-- [ ] Set up project scaffolding (screens/, lib/, assets/, reference/)
-- [ ] Implement event bus (pub/sub) and screen manager with enter/exit/update/draw
-- [ ] Stub all screens (intro, menu, new_game_location, load_game, game, achievements, options, cheats, quit) with programmer art placeholders
-- [ ] Wire Love2D callbacks to current screen; add basic transition events (`screen:pre_exit`, `screen:pre_enter`, `screen:entered`)
-- [ ] Add simple navigation flow between screens (no gameplay logic)
-- [ ] Add placeholder UI elements/text to validate layout/navigation
+### Phase 0 — Core Structure Prototype ✅ COMPLETE
+- [x] Set up project scaffolding (screens/, lib/, assets/, reference/)
+- [x] Implement event bus (pub/sub) and screen manager with enter/exit/update/draw
+- [x] Stub all screens (intro, menu, new_game_location, load_game, game, achievements, options, cheats, quit) with programmer art placeholders
+- [x] Wire Love2D callbacks to current screen; add basic transition events (`screen:pre_exit`, `screen:pre_enter`, `screen:entered`)
+- [x] Add simple navigation flow between screens (no gameplay logic)
+- [x] Add placeholder UI elements/text to validate layout/navigation
 
-#### Phase 0 Acceptance Criteria
-- [ ] All listed screens load and can be navigated via menu/options/return flows
-- [ ] Event bus exists with subscribe/unsubscribe/emit and is used for screen transitions
-- [ ] Screen manager calls enter/exit/update/draw per screen; transitions emit `screen:pre_exit`, `screen:pre_enter`, `screen:entered`
-- [ ] Love callbacks are routed through screen manager; input works on current screen
-- [ ] Programmer art/placeholder text visible on each screen to confirm routing
-- [ ] No runtime errors when cycling through all screens in one session
+#### Phase 0 Acceptance Criteria ✅ ALL MET
+- [x] All listed screens load and can be navigated via menu/options/return flows
+- [x] Event bus exists with subscribe/unsubscribe/emit and is used for screen transitions
+- [x] Screen manager calls enter/exit/update/draw per screen; transitions emit `screen:pre_exit`, `screen:pre_enter`, `screen:entered`
+- [x] Love callbacks are routed through screen manager; input works on current screen
+- [x] Programmer art/placeholder text visible on each screen to confirm routing
+- [x] No runtime errors when cycling through all screens in one session
 
 ### Phase 1 — AI Behavior Engine Integration
 - [ ] Review `reference/behaviorengine/Artificial Agency API Reference.html` and `reference/behaviorengine/openapi.json`

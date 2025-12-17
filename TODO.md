@@ -90,14 +90,24 @@ This file tracks tasks, ideas, and progress across different aspects of the proj
 - [x] Programmer art/placeholder text visible on each screen to confirm routing
 - [x] No runtime errors when cycling through all screens in one session
 
-### Phase 1 — AI Behavior Engine Integration
-- [ ] Review `reference/behaviorengine/Artificial Agency API Reference.html` and `reference/behaviorengine/openapi.json`
-- [ ] Add HTTP + JSON deps (lua-http, lunajson) and package.path wiring
-- [ ] Implement `api_client` module for sessions/agents/messages (wrap create session, create agent, add messages)
-- [ ] Create simple in-game console/log to show API interactions and errors
-- [ ] Add minimal UI flow to start a session and create an agent; display returned IDs
-- [ ] Add stub to send a test ContentMessage and show the response
-- [ ] Handle API key/version headers and configurable endpoints
+### Phase 1 — AI Behavior Engine Integration ✅ COMPLETE
+- [x] Review `reference/behaviorengine/Artificial Agency API Reference.html` and `reference/behaviorengine/openapi.json`
+- [x] Add HTTP + JSON deps (lunajson, custom http_client with proxy workaround) and package.path wiring
+- [x] Implement `api_client` module for sessions/agents/messages (wrap create session, create agent, add messages)
+- [x] Create simple in-game console/log to show API interactions and errors (logger module with timestamped file logging)
+- [x] Add minimal UI flow to start a session and create an agent; display returned IDs (api_test screen)
+- [x] Add stub to send a test ContentMessage and show the response
+- [x] Handle API key/version headers and configurable endpoints (local_config.lua for credentials)
+
+#### Phase 1 Acceptance Criteria ✅ ALL MET
+- [x] HTTP and JSON libraries integrated and working (lunajson, custom http_client with HTTP proxy workaround for lua-https POST bug on Windows)
+- [x] API client successfully creates sessions with project_id and metadata
+- [x] API client successfully creates agents with OpenAI GPT 5 and proper configuration
+- [x] API client successfully sends messages and receives responses
+- [x] All API interactions logged with timestamps to `saved/logs/` directory
+- [x] Test UI screen allows testing all three operations (create session, create agent, send message)
+- [x] API credentials stored in gitignored `local_config.lua` file
+- [x] HTTP proxy workaround implemented for Windows POST request bug in lua-https
 
 ### Phase 2 — Simple Game Loop (Hex Homestead, Card Hand)
 - [ ] Design session for mechanics: hex map layout, card play flow, month/season pacing

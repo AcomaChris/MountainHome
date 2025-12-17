@@ -8,8 +8,8 @@ function love.conf(t)
     t.identity = "MountainHome"
     
     -- Set initial window size
-    t.window.width = 800
-    t.window.height = 600
+    t.window.width = 1280
+    t.window.height = 720
     
     -- Allow the window to be resizable (optional, but useful for development)
     t.window.resizable = true

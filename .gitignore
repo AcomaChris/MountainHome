@@ -1,3 +1,6 @@
 /examples/hex_map/dist
 /examples/hex_map/dist
 examples/hex_map/dist/hex_map.love
+
+# Local configuration file with API credentials (not committed to repo)
+local_config.lua

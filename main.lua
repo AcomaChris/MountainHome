@@ -7,7 +7,7 @@
 -- Pattern: lib/?/?.lua matches lib/module/submodule.lua (for lunajson.decoder)
 -- Pattern: lib/?/?/?.lua matches lib/module/module/submodule.lua (for lunajson structure)
 -- Pattern: lib/lua-http/?.lua matches lib/lua-http/http/request.lua (for lua-http)
-package.path = package.path .. ";lib/?.lua;lib/?/init.lua;lib/?/?.lua;lib/?/?/?.lua;lib/lua-http/?.lua;?/init.lua;?/?.lua"
+package.path = package.path .. ";lib/?.lua;lib/?/init.lua;lib/?/?.lua;lib/?/?/?.lua;lib/lua-http/?.lua;?.lua;?/init.lua;?/?.lua"
 
 local screen_manager = require('lib.screen_manager')
 local menu_screen = require('screens.menu')
@@ -17,6 +17,7 @@ local load_game_screen = require('screens.load_game')
 local game_screen = require('screens.game')
 local achievements_screen = require('screens.achievements')
 local options_screen = require('screens.options')
+local api_test_screen = require('screens.api_test')
 local cheats_screen = require('screens.cheats')
 local quit_screen = require('screens.quit')
 local bus = require('lib.event_bus')
@@ -28,6 +29,33 @@ local test_http_json_available, test_http_json = pcall(require, 'lib.test_http_j
 -- Called once when the game starts
 function love.load()
     love.window.setTitle("Mountain Home")
+    
+    -- Log Love2D version information for debugging and compatibility checks
+    local major, minor, revision, codename = love.getVersion()
+    log.info("system:love2d_version", { 
+        major = major, 
+        minor = minor, 
+        revision = revision, 
+        codename = codename,
+        version_string = string.format("%d.%d.%d (%s)", major, minor, revision, codename),
+        note = "Love2D version detected at startup"
+    })
+    
+    -- Check if lua-https is available (Love2D 12.0+)
+    -- This is the preferred HTTP client for HTTPS requests
+    local https_available, https = pcall(require, 'https')
+    if https_available and https and https.request then
+        log.info("system:lua_https", { 
+            status = "available", 
+            note = "lua-https module is available (Love2D 12.0+). Using native HTTPS client with automatic redirect handling." 
+        })
+    else
+        log.info("system:lua_https", { 
+            status = "unavailable", 
+            error = tostring(https),
+            note = "lua-https not available. HTTP client will fall back to socket.http (may have redirect/port issues)." 
+        })
+    end
     
     -- Set pixel-perfect filtering for pixel art (no anti-aliasing)
     -- "nearest" keeps hard edges instead of smooth interpolation
@@ -41,6 +69,7 @@ function love.load()
     screen_manager.register_screen("game", game_screen)
     screen_manager.register_screen("achievements", achievements_screen)
     screen_manager.register_screen("options", options_screen)
+    screen_manager.register_screen("api_test", api_test_screen)
     screen_manager.register_screen("cheats", cheats_screen)
     screen_manager.register_screen("quit", quit_screen)
 
@@ -94,6 +123,14 @@ function love.load()
     bus.subscribe("options:back", function()
         log.info("options:back")
         screen_manager.go_to("menu")
+    end)
+    bus.subscribe("options:api_test", function()
+        log.info("options:api_test")
+        screen_manager.go_to("api_test")
+    end)
+    bus.subscribe("api_test:back", function()
+        log.info("api_test:back")
+        screen_manager.go_to("options")
     end)
     bus.subscribe("cheats:back", function()
         log.info("cheats:back")

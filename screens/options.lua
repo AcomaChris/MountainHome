@@ -15,8 +15,11 @@ function OptionsScreen.enter(ctx)
     local btn_w, btn_h = 220, 44
     
     OptionsScreen.buttons = {
-        UIButton.new("Test HTTP/JSON Libraries", (w - btn_w) / 2, h * 0.5, btn_w, btn_h, function()
+        UIButton.new("Test HTTP/JSON Libraries", (w - btn_w) / 2, h * 0.4, btn_w, btn_h, function()
             bus.emit("options:test_libraries", { from = "options" })
+        end),
+        UIButton.new("Test AI API", (w - btn_w) / 2, h * 0.5, btn_w, btn_h, function()
+            bus.emit("options:api_test", { from = "options" })
         end),
         UIButton.new("Back to Menu", (w - btn_w) / 2, h - 80, btn_w, btn_h, function()
             bus.emit("options:back", { from = "options" })

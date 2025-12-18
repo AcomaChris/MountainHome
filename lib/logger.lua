@@ -14,11 +14,25 @@ local function timestamp()
 end
 
 -- Format tables into a compact string; fallback to tostring for other types.
+-- String values are quoted for readability.
 local function format_payload(payload)
     if type(payload) == "table" then
         local parts = {}
         for k, v in pairs(payload) do
-            table.insert(parts, tostring(k) .. "=" .. tostring(v))
+            local key = tostring(k)
+            local value
+            if type(v) == "string" then
+                -- Quote string values for clarity
+                value = '"' .. v .. '"'
+            elseif type(v) == "table" then
+                -- For tables, show a summary (e.g., "table(3 keys)")
+                local count = 0
+                for _ in pairs(v) do count = count + 1 end
+                value = "table(" .. count .. " keys)"
+            else
+                value = tostring(v)
+            end
+            table.insert(parts, key .. "=" .. value)
         end
         table.sort(parts)
         return table.concat(parts, ", ")

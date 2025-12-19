@@ -202,8 +202,11 @@ function love.load()
         log.info("test:module_unavailable", { note = "lib/test_http_json.lua not found or has errors" })
     end
 
+    -- Initialize cheat system (loads discovered cheats)
+    cheat_system.init()
+    
     -- Register cheat codes
-    cheat_system.register("nosaves", "No Saves", function()
+    cheat_system.register("nosaves", "No Saves", "button", function()
         -- Delete all save slots
         for slot = 1, SaveSystem.MAX_SLOTS do
             SaveSystem.delete_slot(slot)
@@ -214,6 +217,7 @@ function love.load()
     -- Subscribe to cheat activation events to show notifications
     bus.subscribe("cheat:activated", function(payload)
         notification.show("Cheat " .. payload.name .. " activated!", 3.0, {0.9, 0.7, 0.3})
+        -- Note: Cheats screen will refresh when entered, showing newly discovered cheats
     end)
     
     -- Start at intro

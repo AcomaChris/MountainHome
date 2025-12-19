@@ -155,7 +155,48 @@ function WeatherCard.draw()
                 love.graphics.setColor(0.2, 0.2, 0.2, front_alpha)
                 love.graphics.printf(WeatherCard.weather.name, card_x + 20, card_y + 40, WeatherCard.card_width - 40, "center")
                 love.graphics.setColor(0.4, 0.4, 0.4, front_alpha)
-                love.graphics.printf(WeatherCard.weather.description, card_x + 20, card_y + 100, WeatherCard.card_width - 40, "center")
+                love.graphics.printf(WeatherCard.weather.description, card_x + 20, card_y + 80, WeatherCard.card_width - 40, "center")
+                
+                -- Draw effects
+                if WeatherCard.weather.effects then
+                    local effects = WeatherCard.weather.effects
+                    local effects_y = card_y + 140
+                    love.graphics.setColor(0.3, 0.3, 0.3, front_alpha)
+                    love.graphics.printf("Effects:", card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                    effects_y = effects_y + 25
+                    
+                    -- Plant growth
+                    if effects.plant_growth_multiplier then
+                        local text = "Plants: "
+                        if effects.plant_growth_multiplier > 1.0 then
+                            text = text .. string.format("%.1fx faster", effects.plant_growth_multiplier)
+                        elseif effects.plant_growth_multiplier < 1.0 and effects.plant_growth_multiplier > 0 then
+                            text = text .. string.format("%.1fx slower", effects.plant_growth_multiplier)
+                        else
+                            text = text .. "Stopped"
+                        end
+                        love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                        effects_y = effects_y + 20
+                    end
+                    
+                    -- Animal spawn
+                    if effects.animal_spawn_chance then
+                        local text = "Animals: "
+                        if effects.animal_spawn_chance > 0 then
+                            text = text .. string.format("%.0f%% chance", effects.animal_spawn_chance * 100)
+                        else
+                            text = text .. "Stay away"
+                        end
+                        love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                        effects_y = effects_y + 20
+                    end
+                    
+                    -- Action cost
+                    if effects.action_cost_modifier and effects.action_cost_modifier > 0 then
+                        local text = string.format("Actions: +%d AP", effects.action_cost_modifier)
+                        love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                    end
+                end
             end
         end
     elseif WeatherCard.revealed then
@@ -170,7 +211,48 @@ function WeatherCard.draw()
             love.graphics.setColor(0.2, 0.2, 0.2)
             love.graphics.printf(WeatherCard.weather.name, card_x + 20, card_y + 40, WeatherCard.card_width - 40, "center")
             love.graphics.setColor(0.4, 0.4, 0.4)
-            love.graphics.printf(WeatherCard.weather.description, card_x + 20, card_y + 100, WeatherCard.card_width - 40, "center")
+            love.graphics.printf(WeatherCard.weather.description, card_x + 20, card_y + 80, WeatherCard.card_width - 40, "center")
+            
+            -- Draw effects
+            if WeatherCard.weather.effects then
+                local effects = WeatherCard.weather.effects
+                local effects_y = card_y + 140
+                love.graphics.setColor(0.3, 0.3, 0.3)
+                love.graphics.printf("Effects:", card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                effects_y = effects_y + 25
+                
+                -- Plant growth
+                if effects.plant_growth_multiplier then
+                    local text = "Plants: "
+                    if effects.plant_growth_multiplier > 1.0 then
+                        text = text .. string.format("%.1fx faster", effects.plant_growth_multiplier)
+                    elseif effects.plant_growth_multiplier < 1.0 and effects.plant_growth_multiplier > 0 then
+                        text = text .. string.format("%.1fx slower", effects.plant_growth_multiplier)
+                    else
+                        text = text .. "Stopped"
+                    end
+                    love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                    effects_y = effects_y + 20
+                end
+                
+                -- Animal spawn
+                if effects.animal_spawn_chance then
+                    local text = "Animals: "
+                    if effects.animal_spawn_chance > 0 then
+                        text = text .. string.format("%.0f%% chance", effects.animal_spawn_chance * 100)
+                    else
+                        text = text .. "Stay away"
+                    end
+                    love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                    effects_y = effects_y + 20
+                end
+                
+                -- Action cost
+                if effects.action_cost_modifier and effects.action_cost_modifier > 0 then
+                    local text = string.format("Actions: +%d AP", effects.action_cost_modifier)
+                    love.graphics.printf(text, card_x + 20, effects_y, WeatherCard.card_width - 40, "left")
+                end
+            end
         end
     else
         -- Face down: show back

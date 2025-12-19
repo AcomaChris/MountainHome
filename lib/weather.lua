@@ -3,52 +3,97 @@
 -- Weather affects hex tile transformations and gameplay.
 
 local Weather = {
-    -- Weather types
+    -- Weather types with effects
     types = {
         sunny = {
             id = "sunny",
             name = "Sunny",
             description = "Clear skies and warm weather",
+            effects = {
+                plant_growth_multiplier = 2.0,  -- Plants grow twice as fast
+                animal_spawn_chance = 0.3,  -- 30% chance for animals to appear
+                action_cost_modifier = 0,  -- No change to action costs
+            },
         },
         overcast = {
             id = "overcast",
             name = "Overcast",
             description = "Cloudy skies",
+            effects = {
+                plant_growth_multiplier = 1.0,  -- Normal growth
+                animal_spawn_chance = 0.1,  -- 10% chance for animals
+                action_cost_modifier = 0,
+            },
         },
         rain = {
             id = "rain",
             name = "Rain",
             description = "Light to moderate rainfall",
+            effects = {
+                plant_growth_multiplier = 1.0,  -- Normal growth
+                animal_spawn_chance = 0.0,  -- Animals stay away
+                action_cost_modifier = 0,
+            },
         },
         storm = {
             id = "storm",
             name = "Storm",
             description = "Heavy rain and strong winds",
+            effects = {
+                plant_growth_multiplier = 0.5,  -- Slower growth due to damage
+                animal_spawn_chance = 0.0,  -- No animals
+                action_cost_modifier = 1,  -- Actions cost 1 more AP (dangerous conditions)
+            },
         },
         snow = {
             id = "snow",
             name = "Snow",
             description = "Light snowfall",
+            effects = {
+                plant_growth_multiplier = 0.0,  -- No growth (dormant)
+                animal_spawn_chance = 0.2,  -- Some animals still active
+                action_cost_modifier = 1,  -- Actions cost 1 more AP (cold conditions)
+            },
         },
         ice = {
             id = "ice",
             name = "Ice",
             description = "Freezing conditions and ice",
+            effects = {
+                plant_growth_multiplier = 0.0,  -- No growth
+                animal_spawn_chance = 0.0,  -- No animals
+                action_cost_modifier = 2,  -- Actions cost 2 more AP (very dangerous)
+            },
         },
         fog = {
             id = "fog",
             name = "Fog",
             description = "Dense fog reduces visibility",
+            effects = {
+                plant_growth_multiplier = 0.8,  -- Slightly slower growth
+                animal_spawn_chance = 0.0,  -- No animals (can't see)
+                action_cost_modifier = 1,  -- Actions cost 1 more AP (reduced visibility)
+            },
         },
         hail = {
             id = "hail",
             name = "Hail",
             description = "Hailstorms can damage crops",
+            effects = {
+                plant_growth_multiplier = 0.3,  -- Very slow growth (damage)
+                animal_spawn_chance = 0.0,  -- No animals
+                action_cost_modifier = 1,  -- Actions cost 1 more AP (dangerous)
+            },
         },
         wind = {
             id = "wind",
             name = "Windy",
             description = "Strong winds",
+            effects = {
+                plant_growth_multiplier = 0.9,  -- Slightly slower growth
+                animal_spawn_chance = 0.15,  -- Some animals
+                action_cost_modifier = 0,  -- No change to action costs
+            },
         },
     },
     
@@ -108,14 +153,24 @@ function Weather.get(id)
     return Weather.types[id]
 end
 
--- Draw a random weather card for a season
+-- Draw a random weather card for a season and location
 -- @param season string: Season name ("Spring", "Summer", "Fall", "Winter")
+-- @param location_id string: Location ID (optional, for location-specific probabilities)
 -- @return table: Weather data
-function Weather.draw_for_season(season)
+function Weather.draw_for_season(season, location_id)
     local probs = Weather.probabilities[season]
     if not probs then
         -- Fallback to Spring if season not found
         probs = Weather.probabilities["Spring"]
+    end
+    
+    -- If location has custom probabilities, use those instead
+    if location_id then
+        local Locations = require('lib.locations')
+        local location = Locations.get_by_id(location_id)
+        if location and location.weather_probabilities and location.weather_probabilities[season] then
+            probs = location.weather_probabilities[season]
+        end
     end
     
     -- Weighted random selection

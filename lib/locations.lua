@@ -9,6 +9,7 @@ local Locations = {
         name = "Revelstoke",
         difficulty = "Easy",
         description = "A welcoming mountain town with established infrastructure.",
+        starting_weather = "sunny",  -- Starting weather condition
         strengths = {
             "Well-maintained roads and services",
             "Active community support",
@@ -32,7 +33,54 @@ local Locations = {
         },
         starting_events = {
             "Farmers Market - Extra resources available in first month"
-        }
+        },
+        -- Location-specific weather probabilities (overrides season defaults)
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.30,
+                overcast = 0.20,
+                rain = 0.25,
+                storm = 0.08,
+                snow = 0.05,
+                ice = 0.02,
+                fog = 0.05,
+                hail = 0.03,
+                wind = 0.02,
+            },
+            Summer = {
+                sunny = 0.40,
+                overcast = 0.15,
+                rain = 0.15,
+                storm = 0.12,
+                snow = 0.0,
+                ice = 0.0,
+                fog = 0.03,
+                hail = 0.10,
+                wind = 0.05,
+            },
+            Fall = {
+                sunny = 0.25,
+                overcast = 0.25,
+                rain = 0.20,
+                storm = 0.08,
+                snow = 0.05,
+                ice = 0.02,
+                fog = 0.12,
+                hail = 0.01,
+                wind = 0.02,
+            },
+            Winter = {
+                sunny = 0.20,
+                overcast = 0.15,
+                rain = 0.03,
+                storm = 0.03,
+                snow = 0.35,
+                ice = 0.12,
+                fog = 0.08,
+                hail = 0.02,
+                wind = 0.02,
+            },
+        },
     },
     
     invermere = {
@@ -40,6 +88,7 @@ local Locations = {
         name = "Invermere",
         difficulty = "Easy",
         description = "A lakeside community with rich natural resources.",
+        starting_weather = "sunny",
         strengths = {
             "Abundant water sources",
             "Fertile soil",
@@ -63,7 +112,53 @@ local Locations = {
         },
         starting_events = {
             "Great Summer Weather - Extended growing season bonus"
-        }
+        },
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.35,
+                overcast = 0.15,
+                rain = 0.20,
+                storm = 0.08,
+                snow = 0.05,
+                ice = 0.02,
+                fog = 0.10,
+                hail = 0.03,
+                wind = 0.02,
+            },
+            Summer = {
+                sunny = 0.45,
+                overcast = 0.12,
+                rain = 0.12,
+                storm = 0.12,
+                snow = 0.0,
+                ice = 0.0,
+                fog = 0.04,
+                hail = 0.10,
+                wind = 0.05,
+            },
+            Fall = {
+                sunny = 0.30,
+                overcast = 0.20,
+                rain = 0.18,
+                storm = 0.08,
+                snow = 0.05,
+                ice = 0.02,
+                fog = 0.15,
+                hail = 0.01,
+                wind = 0.01,
+            },
+            Winter = {
+                sunny = 0.18,
+                overcast = 0.12,
+                rain = 0.02,
+                storm = 0.02,
+                snow = 0.40,
+                ice = 0.15,
+                fog = 0.08,
+                hail = 0.02,
+                wind = 0.01,
+            },
+        },
     },
     
     -- Medium difficulty locations
@@ -72,6 +167,7 @@ local Locations = {
         name = "Radium Hot Springs",
         difficulty = "Medium",
         description = "A resort town with geothermal features and challenging terrain.",
+        starting_weather = "overcast",
         strengths = {
             "Geothermal heating potential",
             "Tourist infrastructure",
@@ -96,7 +192,53 @@ local Locations = {
         },
         starting_events = {
             "Winter Workforce - Extra help available during first winter"
-        }
+        },
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.20,
+                overcast = 0.25,
+                rain = 0.20,
+                storm = 0.12,
+                snow = 0.08,
+                ice = 0.03,
+                fog = 0.08,
+                hail = 0.02,
+                wind = 0.02,
+            },
+            Summer = {
+                sunny = 0.30,
+                overcast = 0.18,
+                rain = 0.15,
+                storm = 0.18,
+                snow = 0.0,
+                ice = 0.0,
+                fog = 0.06,
+                hail = 0.10,
+                wind = 0.03,
+            },
+            Fall = {
+                sunny = 0.15,
+                overcast = 0.28,
+                rain = 0.22,
+                storm = 0.12,
+                snow = 0.08,
+                ice = 0.03,
+                fog = 0.10,
+                hail = 0.01,
+                wind = 0.01,
+            },
+            Winter = {
+                sunny = 0.10,
+                overcast = 0.18,
+                rain = 0.05,
+                storm = 0.08,
+                snow = 0.35,
+                ice = 0.18,
+                fog = 0.05,
+                hail = 0.01,
+                wind = 0.00,
+            },
+        },
     },
     
     golden = {
@@ -104,6 +246,7 @@ local Locations = {
         name = "Golden",
         difficulty = "Medium",
         description = "A historic mining town with rugged mountain surroundings.",
+        starting_weather = "rain",
         strengths = {
             "Established trade routes",
             "Mining heritage provides tools",
@@ -128,7 +271,53 @@ local Locations = {
         },
         starting_events = {
             "Farmers Market - Extra resources available in first month"
-        }
+        },
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.18,
+                overcast = 0.22,
+                rain = 0.25,
+                storm = 0.15,
+                snow = 0.08,
+                ice = 0.04,
+                fog = 0.05,
+                hail = 0.02,
+                wind = 0.01,
+            },
+            Summer = {
+                sunny = 0.25,
+                overcast = 0.20,
+                rain = 0.18,
+                storm = 0.20,
+                snow = 0.0,
+                ice = 0.0,
+                fog = 0.05,
+                hail = 0.10,
+                wind = 0.02,
+            },
+            Fall = {
+                sunny = 0.12,
+                overcast = 0.30,
+                rain = 0.25,
+                storm = 0.15,
+                snow = 0.10,
+                ice = 0.05,
+                fog = 0.08,
+                hail = 0.02,
+                wind = 0.03,
+            },
+            Winter = {
+                sunny = 0.08,
+                overcast = 0.20,
+                rain = 0.08,
+                storm = 0.12,
+                snow = 0.35,
+                ice = 0.12,
+                fog = 0.04,
+                hail = 0.01,
+                wind = 0.00,
+            },
+        },
     },
     
     -- Hard difficulty locations
@@ -137,6 +326,7 @@ local Locations = {
         name = "Jasper",
         difficulty = "Hard",
         description = "A remote national park town with pristine wilderness.",
+        starting_weather = "snow",
         strengths = {
             "Abundant wildlife",
             "Protected natural resources",
@@ -163,7 +353,53 @@ local Locations = {
         },
         starting_events = {
             "Great Summer Weather - Extended growing season bonus"
-        }
+        },
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.15,
+                overcast = 0.20,
+                rain = 0.18,
+                storm = 0.10,
+                snow = 0.15,
+                ice = 0.08,
+                fog = 0.10,
+                hail = 0.02,
+                wind = 0.02,
+            },
+            Summer = {
+                sunny = 0.25,
+                overcast = 0.20,
+                rain = 0.15,
+                storm = 0.15,
+                snow = 0.05,
+                ice = 0.02,
+                fog = 0.08,
+                hail = 0.08,
+                wind = 0.02,
+            },
+            Fall = {
+                sunny = 0.10,
+                overcast = 0.25,
+                rain = 0.20,
+                storm = 0.12,
+                snow = 0.15,
+                ice = 0.08,
+                fog = 0.08,
+                hail = 0.01,
+                wind = 0.01,
+            },
+            Winter = {
+                sunny = 0.05,
+                overcast = 0.15,
+                rain = 0.02,
+                storm = 0.05,
+                snow = 0.45,
+                ice = 0.20,
+                fog = 0.05,
+                hail = 0.02,
+                wind = 0.01,
+            },
+        },
     },
     
     kananaskis_village = {
@@ -171,6 +407,7 @@ local Locations = {
         name = "Kananaskis Village",
         difficulty = "Hard",
         description = "An isolated mountain community with extreme weather.",
+        starting_weather = "ice",
         strengths = {
             "Secluded location",
             "Rich mineral deposits",
@@ -197,7 +434,53 @@ local Locations = {
         },
         starting_events = {
             "Winter Workforce - Extra help available during first winter"
-        }
+        },
+        weather_probabilities = {
+            Spring = {
+                sunny = 0.12,
+                overcast = 0.18,
+                rain = 0.15,
+                storm = 0.12,
+                snow = 0.20,
+                ice = 0.12,
+                fog = 0.08,
+                hail = 0.02,
+                wind = 0.01,
+            },
+            Summer = {
+                sunny = 0.20,
+                overcast = 0.22,
+                rain = 0.15,
+                storm = 0.18,
+                snow = 0.08,
+                ice = 0.05,
+                fog = 0.08,
+                hail = 0.03,
+                wind = 0.01,
+            },
+            Fall = {
+                sunny = 0.08,
+                overcast = 0.22,
+                rain = 0.18,
+                storm = 0.15,
+                snow = 0.20,
+                ice = 0.10,
+                fog = 0.05,
+                hail = 0.01,
+                wind = 0.01,
+            },
+            Winter = {
+                sunny = 0.03,
+                overcast = 0.12,
+                rain = 0.01,
+                storm = 0.08,
+                snow = 0.50,
+                ice = 0.22,
+                fog = 0.03,
+                hail = 0.01,
+                wind = 0.00,
+            },
+        },
     },
 }
 

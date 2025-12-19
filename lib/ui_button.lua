@@ -44,7 +44,11 @@ end
 
 function UIButton:mousepressed(x, y)
     if self.on_click and self:contains(x, y) then
-        self.on_click()
+        -- Call the callback, catching any errors
+        local success, err = pcall(self.on_click)
+        if not success then
+            print("UIButton: Error in on_click callback: " .. tostring(err))
+        end
         return true
     end
     return false

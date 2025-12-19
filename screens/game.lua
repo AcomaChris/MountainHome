@@ -118,6 +118,25 @@ function GameScreen.enter(ctx)
                 Inventory.buildings = GameScreen.game_data.inventory.buildings or {}
             end
             
+            -- Set starting weather if not set
+            if not GameScreen.game_data.current_weather then
+                local location = Locations.get_by_id(GameScreen.game_data.location)
+                if location and location.starting_weather then
+                    local weather = Weather.get(location.starting_weather)
+                    if weather then
+                        GameScreen.game_data.current_weather = weather.id
+                        GameScreen.game_data.weather_name = weather.name
+                        GameScreen.game_data.weather_effects = weather.effects
+                    end
+                else
+                    -- Default to sunny if no starting weather specified
+                    local weather = Weather.get("sunny")
+                    GameScreen.game_data.current_weather = weather.id
+                    GameScreen.game_data.weather_name = weather.name
+                    GameScreen.game_data.weather_effects = weather.effects
+                end
+            end
+            
             -- Spawn characters on map
             GameScreen.spawn_characters()
             
@@ -176,11 +195,13 @@ function GameScreen.enter(ctx)
             if GameScreen.game_data and not GameScreen.showing_weather_card then
                 -- Draw weather card for new month
                 local season = GameScreen.game_data.season or "Spring"
-                local weather = Weather.draw_for_season(season)
+                local location_id = GameScreen.game_data.location
+                local weather = Weather.draw_for_season(season, location_id)
                 
-                -- Store weather in game state
+                -- Store weather and effects in game state
                 GameScreen.game_data.current_weather = weather.id
                 GameScreen.game_data.weather_name = weather.name
+                GameScreen.game_data.weather_effects = weather.effects
                 
                 -- Show weather card
                 WeatherCard.show(weather, w, h)
@@ -408,10 +429,82 @@ function GameScreen.draw()
         HexCharacters.draw()
     end
     
+    -- Draw weather panel on the right side
+    if not GameScreen.showing_weather_card and GameScreen.game_data and GameScreen.game_data.current_weather then
+        local weather_panel_x = w - 250
+        local weather_panel_y = resource_y + 30
+        local weather_panel_w = 240
+        local weather_panel_h = 200
+        
+        -- Panel background
+        love.graphics.setColor(0.15, 0.17, 0.2)
+        love.graphics.rectangle("fill", weather_panel_x, weather_panel_y, weather_panel_w, weather_panel_h, 6, 6)
+        love.graphics.setColor(0.3, 0.35, 0.4)
+        love.graphics.rectangle("line", weather_panel_x, weather_panel_y, weather_panel_w, weather_panel_h, 6, 6)
+        
+        -- Title
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("Current Weather", weather_panel_x + 10, weather_panel_y + 10, weather_panel_w - 20, "left")
+        
+        local current_y = weather_panel_y + 35
+        
+        -- Weather name
+        love.graphics.setColor(0.9, 0.9, 0.7)
+        love.graphics.printf(GameScreen.game_data.weather_name or "Unknown", weather_panel_x + 10, current_y, weather_panel_w - 20, "left")
+        current_y = current_y + 25
+        
+        -- Weather effects
+        if GameScreen.game_data.weather_effects then
+            local effects = GameScreen.game_data.weather_effects
+            love.graphics.setColor(0.8, 0.8, 0.9)
+            love.graphics.printf("Effects:", weather_panel_x + 10, current_y, weather_panel_w - 20, "left")
+            current_y = current_y + 20
+            
+            -- Plant growth
+            if effects.plant_growth_multiplier then
+                local growth_text = "Plant Growth: "
+                if effects.plant_growth_multiplier > 1.0 then
+                    growth_text = growth_text .. string.format("%.1fx faster", effects.plant_growth_multiplier)
+                    love.graphics.setColor(0.6, 0.9, 0.6)  -- Green for positive
+                elseif effects.plant_growth_multiplier < 1.0 and effects.plant_growth_multiplier > 0 then
+                    growth_text = growth_text .. string.format("%.1fx slower", effects.plant_growth_multiplier)
+                    love.graphics.setColor(0.9, 0.7, 0.6)  -- Orange for negative
+                else
+                    growth_text = growth_text .. "Stopped"
+                    love.graphics.setColor(0.9, 0.6, 0.6)  -- Red for stopped
+                end
+                love.graphics.printf(growth_text, weather_panel_x + 20, current_y, weather_panel_w - 30, "left")
+                current_y = current_y + 18
+            end
+            
+            -- Animal spawn chance
+            if effects.animal_spawn_chance then
+                local animal_text = "Animal Chance: "
+                if effects.animal_spawn_chance > 0 then
+                    animal_text = animal_text .. string.format("%.0f%%", effects.animal_spawn_chance * 100)
+                    love.graphics.setColor(0.6, 0.9, 0.6)  -- Green
+                else
+                    animal_text = animal_text .. "None"
+                    love.graphics.setColor(0.7, 0.7, 0.7)  -- Gray
+                end
+                love.graphics.printf(animal_text, weather_panel_x + 20, current_y, weather_panel_w - 30, "left")
+                current_y = current_y + 18
+            end
+            
+            -- Action cost modifier
+            if effects.action_cost_modifier and effects.action_cost_modifier > 0 then
+                local cost_text = string.format("Actions: +%d AP", effects.action_cost_modifier)
+                love.graphics.setColor(0.9, 0.7, 0.6)  -- Orange for negative
+                love.graphics.printf(cost_text, weather_panel_x + 20, current_y, weather_panel_w - 30, "left")
+                current_y = current_y + 18
+            end
+        end
+    end
+    
     -- Draw inventory panel if visible
     if GameScreen.inventory_visible and not GameScreen.showing_weather_card then
         local inv_x = w - 250
-        local inv_y = resource_y + 30
+        local inv_y = resource_y + 250  -- Move down to make room for weather panel
         local inv_w = 240
         local inv_h = h - inv_y - 80
         

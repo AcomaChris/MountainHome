@@ -168,7 +168,7 @@ function love.load()
     -- Wire world map to game screen
     bus.subscribe("world_map:start_game", function(payload)
         log.info("world_map:start_game", payload)
-        screen_manager.go_to("game", { slot = payload.slot, location = payload.location })
+        screen_manager.go_to("game", { data = { slot = payload.slot, location = payload.location } })
     end)
     
     -- Wire load game to game screen

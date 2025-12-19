@@ -76,6 +76,8 @@ function WorldMapScreen.enter(ctx)
     
     -- Confirm button (hidden until location selected)
     WorldMapScreen.confirm_button = UIButton.new("Confirm & Start Game", (w - 250) / 2, h - 60, 250, btn_h, function()
+        log.info("world_map:confirm_button_clicked", { selected_location = WorldMapScreen.selected_location and WorldMapScreen.selected_location.id or "nil" })
+        
         if WorldMapScreen.selected_location then
             -- Find empty save slot
             local slot = SaveSystem.find_empty_slot()
@@ -85,11 +87,15 @@ function WorldMapScreen.enter(ctx)
                 return
             end
             
+            log.info("world_map:found_slot", { slot = slot })
+            
             -- Create new game state using GameState module
             local GameState = require('lib.game_state')
             local game_state = GameState.create_new(WorldMapScreen.selected_location.id)
             game_state.location_name = WorldMapScreen.selected_location.name
             game_state.difficulty = WorldMapScreen.selected_location.difficulty
+            
+            log.info("world_map:game_state_created", { location = game_state.location })
             
             -- Save to slot
             local saved = SaveSystem.save_game(slot, game_state)
@@ -105,6 +111,8 @@ function WorldMapScreen.enter(ctx)
                 log.info("world_map:save_failed", { slot = slot, location = WorldMapScreen.selected_location.id })
                 -- TODO: Show error message to user
             end
+        else
+            log.info("world_map:no_location_selected", { note = "Button clicked but no location selected" })
         end
     end)
 end
@@ -207,15 +215,32 @@ function WorldMapScreen.draw()
         end
     end
     
-    -- Draw buttons
+    -- Draw buttons (draw confirm button on top so it's clickable)
     WorldMapScreen.back_button:draw()
-    if WorldMapScreen.detail_panel_visible and WorldMapScreen.selected_location then
+    if WorldMapScreen.detail_panel_visible and WorldMapScreen.selected_location and WorldMapScreen.confirm_button then
         WorldMapScreen.confirm_button:draw()
     end
 end
 
 function WorldMapScreen.mousepressed(x, y, button)
     if button ~= 1 then return end
+    
+    log.info("world_map:mousepressed", { 
+        x = x, 
+        y = y, 
+        has_confirm = WorldMapScreen.confirm_button ~= nil,
+        detail_panel_visible = WorldMapScreen.detail_panel_visible,
+        has_selected = WorldMapScreen.selected_location ~= nil
+    })
+    
+    -- Check confirm button first (it's on top)
+    if WorldMapScreen.confirm_button and WorldMapScreen.detail_panel_visible and WorldMapScreen.selected_location then
+        local clicked = WorldMapScreen.confirm_button:mousepressed(x, y)
+        if clicked then
+            log.info("world_map:confirm_button_clicked_via_mousepressed", {})
+            return
+        end
+    end
     
     -- Check location buttons
     for _, btn in ipairs(WorldMapScreen.location_buttons) do
@@ -224,15 +249,8 @@ function WorldMapScreen.mousepressed(x, y, button)
         end
     end
     
-    -- Check confirm button
-    if WorldMapScreen.confirm_button and WorldMapScreen.detail_panel_visible then
-        if WorldMapScreen.confirm_button:mousepressed(x, y) then
-            return
-        end
-    end
-    
     -- Check back button
-    if WorldMapScreen.back_button:mousepressed(x, y) then
+    if WorldMapScreen.back_button and WorldMapScreen.back_button:mousepressed(x, y) then
         return
     end
 end

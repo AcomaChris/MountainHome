@@ -1,15 +1,13 @@
 -- Placeholder intro screen for Phase 0. Shows simple text and returns to menu on any key.
 
 local bus = require('lib.event_bus')
-local UIButton = require('lib.ui_button')
 local log = require('lib.logger')
 
 local IntroScreen = {
     title = "Studio Intro",
-    info = "Tap the button to return to menu.",
+    info = "Press any key or click to continue",
     timer = 0,
     display_time = 0, -- not used yet; placeholder for future timed sequence
-    buttons = {},
     -- McJaggy sprite
     sprite = nil,
     sprite_w = 0,
@@ -82,13 +80,6 @@ function IntroScreen.enter(ctx)
     end
 
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-    local btn_w, btn_h = 220, 44
-    local y = h * 0.5
-    IntroScreen.buttons = {
-        UIButton.new("Back to Menu", (w - btn_w) / 2, y, btn_w, btn_h, function()
-            bus.emit("intro:done", { from = "intro" })
-        end),
-    }
 
     -- Start McJaggy at center-left
     IntroScreen.pos.x = w * 0.4
@@ -234,10 +225,6 @@ function IntroScreen.draw()
         love.graphics.printf(msg, 0, y + 64, w, "center")
     end
 
-    for _, btn in ipairs(IntroScreen.buttons) do
-        btn:draw()
-    end
-
     -- Draw McJaggy with pop-in scale and bobbing bounce
     if IntroScreen.visible and IntroScreen.sprite then
         local base_scale = IntroScreen.pop_progress / IntroScreen.pop_duration
@@ -309,47 +296,16 @@ local function is_click_on_sprite(click_x, click_y, sprite_x, sprite_y, sprite_w
            click_y >= sprite_y - half_h and click_y <= sprite_y + half_h
 end
 
+function IntroScreen.keypressed(key, scancode, isrepeat)
+    -- Progress to menu on any key press
+    bus.emit("intro:done", { from = "intro" })
+end
+
 function IntroScreen.mousepressed(x, y, button)
     if button ~= 1 then return end
     
-    -- Check buttons first
-    for _, btn in ipairs(IntroScreen.buttons) do
-        if btn:mousepressed(x, y) then
-            return
-        end
-    end
-    
-    -- Check if clicked on McJaggy
-    if IntroScreen.visible and IntroScreen.sprite then
-        local base_scale = IntroScreen.pop_progress / IntroScreen.pop_duration
-        local scale = math.max(0, math.min(base_scale, 1))
-        local bob = math.sin(love.timer.getTime() * 9) * 6
-        local sprite_y = IntroScreen.pos.y + bob
-        
-        if is_click_on_sprite(x, y, IntroScreen.pos.x, sprite_y, IntroScreen.sprite_w, IntroScreen.sprite_h, scale) then
-            IntroScreen.vibrating = true
-            IntroScreen.vibrate_timer = IntroScreen.vibrate_duration
-            IntroScreen.move_cooldown = 0 -- Trigger immediate movement
-            log.info("character:vibrate_start", { character="McJaggy", x=IntroScreen.pos.x, y=IntroScreen.pos.y, click_x=x, click_y=y })
-            return
-        end
-    end
-    
-    -- Check if clicked on DMeowchi
-    if IntroScreen.visible2 and IntroScreen.sprite2 then
-        local base_scale2 = IntroScreen.pop_progress2 / IntroScreen.pop_duration
-        local scale2 = math.max(0, math.min(base_scale2, 1))
-        local bob2 = math.sin(love.timer.getTime() * 7 + 1.5) * 6
-        local sprite_y2 = IntroScreen.pos2.y + bob2
-        
-        if is_click_on_sprite(x, y, IntroScreen.pos2.x, sprite_y2, IntroScreen.sprite2_w, IntroScreen.sprite2_h, scale2) then
-            IntroScreen.vibrating2 = true
-            IntroScreen.vibrate_timer2 = IntroScreen.vibrate_duration2
-            IntroScreen.move_cooldown2 = 0 -- Trigger immediate movement
-            log.info("character:vibrate_start", { character="DMeowchi", x=IntroScreen.pos2.x, y=IntroScreen.pos2.y, click_x=x, click_y=y })
-            return
-        end
-    end
+    -- Progress to menu on any mouse click
+    bus.emit("intro:done", { from = "intro" })
 end
 
 return IntroScreen

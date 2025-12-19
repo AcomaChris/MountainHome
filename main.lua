@@ -61,6 +61,25 @@ function love.load()
     -- "nearest" keeps hard edges instead of smooth interpolation
     love.graphics.setDefaultFilter("nearest", "nearest")
 
+    -- Load Star Crush font as the default font for the entire game
+    -- Font size 18 provides good readability for UI elements
+    local default_font_size = 18
+    local star_crush_font, font_error = love.graphics.newFont("assets/star-crush.regular.ttf", default_font_size)
+    if star_crush_font then
+        love.graphics.setFont(star_crush_font)
+        log.info("system:font_loaded", { 
+            font = "Star Crush", 
+            size = default_font_size,
+            note = "Default font set successfully" 
+        })
+    else
+        log.info("system:font_load_failed", { 
+            font_path = "assets/star-crush.regular.ttf",
+            error = tostring(font_error),
+            note = "Using Love2D default font instead" 
+        })
+    end
+
     -- Register all screens
     screen_manager.register_screen("menu", menu_screen)
     screen_manager.register_screen("intro", intro_screen)

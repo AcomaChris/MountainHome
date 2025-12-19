@@ -7,6 +7,7 @@ local UIButton = require('lib.ui_button')
 local cheat_system = require('lib.cheat_system')
 local notification = require('lib.notification')
 local log = require('lib.logger')
+local text_utils = require('lib.text_utils')
 
 local CheatsScreen = {
     buttons = {},
@@ -103,9 +104,9 @@ function CheatsScreen.draw()
     if #discovered == 0 then
         -- No cheats discovered
         love.graphics.setColor(0.7, 0.6, 0.6)
-        love.graphics.printf("No cheats discovered yet.", 0, h * 0.4, w, "center")
+        love.graphics.printf(text_utils.clean("No cheats discovered yet."), 0, h * 0.4, w, "center")
         love.graphics.setColor(0.6, 0.5, 0.5)
-        love.graphics.printf("Type cheat codes in-game to discover them!", 0, h * 0.45, w, "center")
+        love.graphics.printf(text_utils.clean("Type cheat codes in-game to discover them!"), 0, h * 0.45, w, "center")
     else
         -- Draw cheat buttons
         for _, btn in ipairs(CheatsScreen.toggle_buttons) do
@@ -117,7 +118,7 @@ function CheatsScreen.draw()
         
         -- Instructions
         love.graphics.setColor(0.7, 0.6, 0.6)
-        love.graphics.printf("Toggle cheats can be turned on/off. Button cheats execute immediately.", 0, h - 100, w, "center")
+        love.graphics.printf(text_utils.clean("Toggle cheats can be turned on/off. Button cheats execute immediately."), 0, h - 100, w, "center")
     end
     
     -- Back button

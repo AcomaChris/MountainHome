@@ -7,6 +7,7 @@ local UIButton = require('lib.ui_button')
 local SaveSystem = require('lib.save_system')
 local Locations = require('lib.locations')
 local log = require('lib.logger')
+local text_utils = require('lib.text_utils')
 
 local GameScreen = {
     buttons = {},
@@ -56,10 +57,10 @@ function GameScreen.draw()
         
         love.graphics.setColor(0.8, 0.8, 0.9)
         local info_y = 80
-        love.graphics.printf("Location: " .. GameScreen.location_data.name, 0, info_y, w, "center")
-        love.graphics.printf("Difficulty: " .. GameScreen.game_data.difficulty, 0, info_y + 25, w, "center")
-        love.graphics.printf("Month: " .. GameScreen.game_data.month, 0, info_y + 50, w, "center")
-        love.graphics.printf("Season: " .. (GameScreen.game_data.season or "Spring"), 0, info_y + 75, w, "center")
+        love.graphics.printf(text_utils.clean("Location: " .. GameScreen.location_data.name), 0, info_y, w, "center")
+        love.graphics.printf(text_utils.clean("Difficulty: " .. GameScreen.game_data.difficulty), 0, info_y + 25, w, "center")
+        love.graphics.printf(text_utils.clean("Month: " .. GameScreen.game_data.month), 0, info_y + 50, w, "center")
+        love.graphics.printf(text_utils.clean("Season: " .. (GameScreen.game_data.season or "Spring")), 0, info_y + 75, w, "center")
         
         love.graphics.setColor(0.7, 0.7, 0.8)
         love.graphics.printf("(Hex grid and gameplay coming soon)", 0, info_y + 120, w, "center")

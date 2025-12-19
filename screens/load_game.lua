@@ -6,6 +6,7 @@ local bus = require('lib.event_bus')
 local UIButton = require('lib.ui_button')
 local SaveSystem = require('lib.save_system')
 local log = require('lib.logger')
+local text_utils = require('lib.text_utils')
 
 local LoadGameScreen = {
     buttons = {},
@@ -51,13 +52,15 @@ function LoadGameScreen.enter(ctx)
             local label = string.format("Slot %d: %s (%s) - Month %d - %s", 
                 i, metadata.location_name or metadata.location, metadata.difficulty, 
                 metadata.month or 1, date_str)
+            label = text_utils.clean(label) -- Remove semicolons
             btn = UIButton.new(label, (w - btn_w) / 2, y, btn_w, btn_h, function()
                 log.info("load_game:slot_selected", { slot = i, location = metadata.location })
                 bus.emit("load_game:load_slot", { slot = i })
             end)
         else
             -- Empty slot
-            btn = UIButton.new("Slot " .. i .. ": (Empty)", (w - btn_w) / 2, y, btn_w, btn_h, function()
+            local empty_label = text_utils.clean("Slot " .. i .. ": (Empty)")
+            btn = UIButton.new(empty_label, (w - btn_w) / 2, y, btn_w, btn_h, function()
                 -- Empty slot - do nothing or show message
             end)
             -- Make empty slots look disabled

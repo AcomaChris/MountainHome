@@ -5,12 +5,15 @@
 --   button:mousepressed(x, y)
 -- Color scheme is minimal programmer art; adjust as needed.
 
+local text_utils = require('lib.text_utils')
+
 local UIButton = {}
 UIButton.__index = UIButton
 
 function UIButton.new(label, x, y, w, h, on_click)
     local self = setmetatable({}, UIButton)
-    self.label = label or ""
+    -- Remove semicolons and other unsupported characters from button labels
+    self.label = text_utils.clean(label or "")
     self.x = x or 0
     self.y = y or 0
     self.w = w or 160

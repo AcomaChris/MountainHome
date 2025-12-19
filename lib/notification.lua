@@ -4,6 +4,8 @@
 --   local notify = require('lib.notification')
 --   notify.show("Cheat activated!", 3.0) -- Shows for 3 seconds
 
+local text_utils = require('lib.text_utils')
+
 local Notification = {
     notifications = {},
 }
@@ -15,6 +17,9 @@ local Notification = {
 function Notification.show(message, duration, color)
     duration = duration or 3.0
     color = color or {1, 1, 1}
+    
+    -- Remove semicolons and other unsupported characters from notification messages
+    message = text_utils.clean(message)
     
     local notification = {
         message = message,

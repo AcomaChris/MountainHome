@@ -22,6 +22,9 @@ local cheats_screen = require('screens.cheats')
 local quit_screen = require('screens.quit')
 local bus = require('lib.event_bus')
 local log = require('lib.logger')
+local cheat_system = require('lib.cheat_system')
+local notification = require('lib.notification')
+local SaveSystem = require('lib.save_system')
 
 -- Test module for HTTP/JSON (will gracefully handle missing libraries)
 local test_http_json_available, test_http_json = pcall(require, 'lib.test_http_json')
@@ -199,6 +202,20 @@ function love.load()
         log.info("test:module_unavailable", { note = "lib/test_http_json.lua not found or has errors" })
     end
 
+    -- Register cheat codes
+    cheat_system.register("nosaves", "No Saves", function()
+        -- Delete all save slots
+        for slot = 1, SaveSystem.MAX_SLOTS do
+            SaveSystem.delete_slot(slot)
+        end
+        log.info("cheat:nosaves_executed", { note = "All save slots deleted" })
+    end)
+    
+    -- Subscribe to cheat activation events to show notifications
+    bus.subscribe("cheat:activated", function(payload)
+        notification.show("Cheat " .. payload.name .. " activated!", 3.0, {0.9, 0.7, 0.3})
+    end)
+    
     -- Start at intro
     screen_manager.go_to("intro")
 end
@@ -206,13 +223,17 @@ end
 -- Forward Love callbacks to the screen manager
 function love.update(dt)
     screen_manager.update(dt)
+    notification.update(dt)
 end
 
 function love.draw()
     screen_manager.draw()
+    notification.draw()
 end
 
 function love.keypressed(key, scancode, isrepeat)
+    -- Check for cheat codes first (before screen handles input)
+    cheat_system.on_keypressed(key)
     screen_manager.keypressed(key, scancode, isrepeat)
 end
 

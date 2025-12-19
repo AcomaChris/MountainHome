@@ -152,6 +152,25 @@ function HexTiles.init_defaults()
         },
     })
     
+    -- Plant tiles
+    HexTiles.register("berry_bush_tile", {
+        name = "Berry Bush",
+        sprite_path = "RAW/Sprites/Berry_Bush_3_stage.png",
+        description = "Produces fruit each month",
+        actions = {
+            {name = "Harvest", cost = 1, result_tile = "berry_bush_tile", resources = {fruit = 2}},
+        },
+    })
+    
+    HexTiles.register("vegetable_garden_tile", {
+        name = "Vegetable Garden",
+        sprite_path = "RAW/Sprites/Grass_Tile_Medium.png",  -- Placeholder
+        description = "Produces vegetables each month",
+        actions = {
+            {name = "Harvest", cost = 1, result_tile = "vegetable_garden_tile", resources = {vegetables = 3}},
+        },
+    })
+    
     -- Load sprites after registration
     HexTiles.load_sprites()
 end

@@ -11,6 +11,8 @@ local HexMap = require('lib.hex_map')
 local Maps = require('data.maps')
 local Weather = require('lib.weather')
 local WeatherCard = require('lib.weather_card')
+local Inventory = require('lib.inventory')
+local ItemPlacement = require('lib.item_placement')
 local log = require('lib.logger')
 local text_utils = require('lib.text_utils')
 
@@ -24,6 +26,8 @@ local GameScreen = {
     current_slot = nil,  -- Store current save slot
     showing_weather_card = false,  -- Weather card is visible
     weather_card_dismissed = false,  -- Weather card has been revealed and can be dismissed
+    inventory_visible = false,  -- Show inventory panel
+    characters_on_map = {},  -- Array of {sprite, x, y, data} for characters
 }
 
 -- Initialize hex tiles and maps (call once)
@@ -36,6 +40,43 @@ local function ensure_hex_initialized()
     end
 end
 
+-- Spawn characters from inventory onto the map
+function GameScreen.spawn_characters()
+    GameScreen.characters_on_map = {}
+    
+    if not GameScreen.game_data or not GameScreen.game_data.inventory then
+        return
+    end
+    
+    local characters = GameScreen.game_data.inventory.characters or {}
+    for _, char_data in ipairs(characters) do
+        local TradeItems = require('data.trade_items')
+        local char_item = TradeItems.get("characters", char_data.id)
+        if char_item and char_item.sprite_path then
+            local success, sprite = pcall(love.graphics.newImage, char_item.sprite_path)
+            if success then
+                -- Find a random hex to spawn on
+                if #HexMap.hexes > 0 then
+                    local hex_index = love.math.random(1, #HexMap.hexes)
+                    local hex = HexMap.get_hex(hex_index)
+                    if hex then
+                        table.insert(GameScreen.characters_on_map, {
+                            sprite = sprite,
+                            sprite_w = sprite:getWidth(),
+                            sprite_h = sprite:getHeight(),
+                            x = hex.x,
+                            y = hex.y,
+                            hex_index = hex_index,
+                            data = char_data,
+                            item = char_item,
+                        })
+                    end
+                end
+            end
+        end
+    end
+end
+
 function GameScreen.enter(ctx)
     GameScreen.last_transition = ctx
     
@@ -43,7 +84,18 @@ function GameScreen.enter(ctx)
     ensure_hex_initialized()
     
     -- Load game data from context or save slot
-    GameScreen.current_slot = ctx and ctx.data and ctx.data.slot
+    -- Screen manager wraps data in ctx.data, so check both ctx.data.slot and ctx.slot
+    GameScreen.current_slot = nil
+    if ctx then
+        if ctx.data and ctx.data.slot then
+            GameScreen.current_slot = ctx.data.slot
+        elseif ctx.data and ctx.data.data and ctx.data.data.slot then
+            -- Handle nested data structure (legacy)
+            GameScreen.current_slot = ctx.data.data.slot
+        elseif ctx.slot then
+            GameScreen.current_slot = ctx.slot
+        end
+    end
     if GameScreen.current_slot then
         GameScreen.game_data = SaveSystem.load_game(GameScreen.current_slot)
         if GameScreen.game_data then
@@ -57,6 +109,17 @@ function GameScreen.enter(ctx)
                 GameScreen.game_data.action_points = GameState.STARTING_ACTION_POINTS
                 GameScreen.game_data.max_action_points = GameState.STARTING_ACTION_POINTS
             end
+            
+            -- Load inventory
+            if GameScreen.game_data.inventory then
+                Inventory.characters = GameScreen.game_data.inventory.characters or {}
+                Inventory.seeds = GameScreen.game_data.inventory.seeds or {}
+                Inventory.tools = GameScreen.game_data.inventory.tools or {}
+                Inventory.buildings = GameScreen.game_data.inventory.buildings or {}
+            end
+            
+            -- Spawn characters on map
+            GameScreen.spawn_characters()
             
             log.info("game:entered", { 
                 slot = GameScreen.current_slot, 
@@ -73,6 +136,8 @@ function GameScreen.enter(ctx)
     GameScreen.action_menu_visible = false
     GameScreen.showing_weather_card = false
     GameScreen.weather_card_dismissed = false
+    GameScreen.inventory_visible = false
+    ItemPlacement.clear()
     WeatherCard.hide()
     
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
@@ -101,6 +166,12 @@ function GameScreen.enter(ctx)
     local btn_w, btn_h = 220, 44
     
     GameScreen.buttons = {
+        UIButton.new("Inventory", 250, h - 60, btn_w, btn_h, function()
+            GameScreen.inventory_visible = not GameScreen.inventory_visible
+        end),
+        UIButton.new("Trade", w - btn_w * 2 - 30, h - 60, btn_w, btn_h, function()
+            bus.emit("game:trade", { from = "game", slot = GameScreen.current_slot })
+        end),
         UIButton.new("Next Month", w - btn_w - 20, h - 60, btn_w, btn_h, function()
             if GameScreen.game_data and not GameScreen.showing_weather_card then
                 -- Draw weather card for new month
@@ -123,6 +194,20 @@ function GameScreen.enter(ctx)
                 WeatherCard.hide()
                 GameScreen.showing_weather_card = false
                 GameScreen.weather_card_dismissed = false
+                
+                -- Refresh trade offers for new month (clear old offers)
+                local month_key = "trade_offers_month_" .. GameScreen.game_data.month
+                GameScreen.game_data[month_key] = nil
+                
+                -- Save inventory
+                if GameScreen.game_data then
+                    GameScreen.game_data.inventory = {
+                        characters = Inventory.characters,
+                        seeds = Inventory.seeds,
+                        tools = Inventory.tools,
+                        buildings = Inventory.buildings,
+                    }
+                end
                 
                 -- Save game after month advance
                 if GameScreen.current_slot then
@@ -256,10 +341,11 @@ function GameScreen.draw()
                 love.graphics.draw(sprite, hex.x, hex.y, 0, scale, scale, HexTiles.SPRITE_WIDTH / 2, HexTiles.SPRITE_HEIGHT / 2)
             end
         end
-    end
+        end  -- Close for loop
+    end  -- Close "if not GameScreen.showing_weather_card" for hex map drawing
     
     -- Draw action menu if hex is selected (only if weather card not showing)
-    if GameScreen.action_menu_visible and GameScreen.action_menu_hex then
+    if GameScreen.action_menu_visible and GameScreen.action_menu_hex and not GameScreen.showing_weather_card then
         local hex = HexMap.get_hex(GameScreen.action_menu_hex)
         if hex then
             local tile = HexTiles.get(hex.tile_id)
@@ -292,8 +378,81 @@ function GameScreen.draw()
                 end
             end
         end
+    end  -- Close action menu if
+    
+    -- Draw characters on map (always visible when not showing weather card)
+    if not GameScreen.showing_weather_card then
+        for _, char in ipairs(GameScreen.characters_on_map) do
+            if char.sprite then
+                local bob = math.sin(love.timer.getTime() * 7) * 4
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(
+                    char.sprite,
+                    char.x,
+                    char.y + bob,
+                    0,
+                    1, 1,
+                    char.sprite_w / 2,
+                    char.sprite_h / 2
+                )
+            end
+        end
     end
-    end  -- Close "if not GameScreen.showing_weather_card" for hex map drawing
+    
+    -- Draw inventory panel if visible
+    if GameScreen.inventory_visible and not GameScreen.showing_weather_card then
+        local inv_x = w - 250
+        local inv_y = resource_y + 30
+        local inv_w = 240
+        local inv_h = h - inv_y - 80
+        
+        -- Panel background
+        love.graphics.setColor(0.15, 0.17, 0.2)
+        love.graphics.rectangle("fill", inv_x, inv_y, inv_w, inv_h, 6, 6)
+        love.graphics.setColor(0.3, 0.35, 0.4)
+        love.graphics.rectangle("line", inv_x, inv_y, inv_w, inv_h, 6, 6)
+        
+        -- Title
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("Inventory", inv_x + 10, inv_y + 10, inv_w - 20, "left")
+        
+        local current_y = inv_y + 35
+        
+        -- Draw seeds
+        local seeds = Inventory.get("seeds")
+        if #seeds > 0 then
+            love.graphics.setColor(0.8, 0.8, 0.9)
+            love.graphics.printf("Seeds:", inv_x + 10, current_y, inv_w - 20, "left")
+            current_y = current_y + 20
+            for _, seed in ipairs(seeds) do
+                local color = (ItemPlacement.selected_item and ItemPlacement.selected_item.id == seed.id) and {0.9, 0.9, 0.5} or {0.7, 0.7, 0.8}
+                love.graphics.setColor(color[1], color[2], color[3])
+                love.graphics.printf(seed.data.name .. " x" .. seed.count, inv_x + 20, current_y, inv_w - 30, "left")
+                current_y = current_y + 18
+            end
+            current_y = current_y + 10
+        end
+        
+        -- Draw buildings
+        local buildings = Inventory.get("buildings")
+        if #buildings > 0 then
+            love.graphics.setColor(0.8, 0.8, 0.9)
+            love.graphics.printf("Buildings:", inv_x + 10, current_y, inv_w - 20, "left")
+            current_y = current_y + 20
+            for _, building in ipairs(buildings) do
+                local color = (ItemPlacement.selected_item and ItemPlacement.selected_item.id == building.id) and {0.9, 0.9, 0.5} or {0.7, 0.7, 0.8}
+                love.graphics.setColor(color[1], color[2], color[3])
+                love.graphics.printf(building.data.name .. " x" .. building.count, inv_x + 20, current_y, inv_w - 30, "left")
+                current_y = current_y + 18
+            end
+        end
+        
+        -- Instructions
+        if ItemPlacement.selected_item then
+            love.graphics.setColor(0.9, 0.9, 0.5)
+            love.graphics.printf("Click hex to place", inv_x + 10, inv_y + inv_h - 30, inv_w - 20, "center")
+        end
+    end
     
     -- Draw buttons (disable "Next Month" button if weather card is showing but not dismissed)
     for i, btn in ipairs(GameScreen.buttons) do
@@ -338,6 +497,45 @@ function GameScreen.mousepressed(x, y, button)
     -- Don't process hex clicks if weather card is showing
     if GameScreen.showing_weather_card then
         return
+    end
+    
+    -- Check inventory panel clicks
+    if GameScreen.inventory_visible then
+        local inv_x = w - 250
+        local inv_y = 165  -- resource_y + 30
+        local inv_w = 240
+        
+        -- Check seed clicks
+        local seeds = Inventory.get("seeds")
+        local seed_start_y = inv_y + 35
+        for i, seed in ipairs(seeds) do
+            local seed_y = seed_start_y + 20 + (i - 1) * 18
+            if x >= inv_x + 20 and x <= inv_x + inv_w - 30 and y >= seed_y and y <= seed_y + 18 then
+                -- Select/deselect seed
+                if ItemPlacement.selected_item and ItemPlacement.selected_item.id == seed.id then
+                    ItemPlacement.clear()
+                else
+                    ItemPlacement.select("seeds", seed.id)
+                end
+                return
+            end
+        end
+        
+        -- Check building clicks
+        local buildings = Inventory.get("buildings")
+        local building_start_y = seed_start_y + 20 + #seeds * 18 + 10
+        for i, building in ipairs(buildings) do
+            local building_y = building_start_y + 20 + (i - 1) * 18
+            if x >= inv_x + 20 and x <= inv_x + inv_w - 30 and y >= building_y and y <= building_y + 18 then
+                -- Select/deselect building
+                if ItemPlacement.selected_item and ItemPlacement.selected_item.id == building.id then
+                    ItemPlacement.clear()
+                else
+                    ItemPlacement.select("buildings", building.id)
+                end
+                return
+            end
+        end
     end
     
     -- Check action menu clicks first
@@ -392,16 +590,48 @@ function GameScreen.mousepressed(x, y, button)
     if hovered then
         local hex = HexMap.get_hex(hovered)
         if hex then
-            GameScreen.selected_hex_index = hovered
-            GameScreen.action_menu_hex = hovered
-            local tile = HexTiles.get(hex.tile_id)
-            GameScreen.action_menu_visible = (tile and #tile.actions > 0)
-            log.info("game:hex_selected", { hex_index = hovered, tile_id = hex.tile_id })
+            -- If item is selected for placement, try to place it
+            if ItemPlacement.selected_item then
+                if ItemPlacement.place(hovered) then
+                    -- Update saved map data
+                    if GameScreen.game_data.hex_map_data then
+                        local hex = HexMap.get_hex(hovered)
+                        for _, map_hex in ipairs(GameScreen.game_data.hex_map_data) do
+                            if map_hex.q == hex.q and map_hex.r == hex.r then
+                                map_hex.tile_id = hex.tile_id
+                                break
+                            end
+                        end
+                    end
+                    
+                    -- Save inventory
+                    if GameScreen.current_slot then
+                        GameScreen.game_data.inventory = {
+                            characters = Inventory.characters,
+                            seeds = Inventory.seeds,
+                            tools = Inventory.tools,
+                            buildings = Inventory.buildings,
+                        }
+                        SaveSystem.save_game(GameScreen.current_slot, GameScreen.game_data)
+                    end
+                    
+                    ItemPlacement.clear()
+                    log.info("game:item_placed", { hex_index = hovered, item = ItemPlacement.selected_item.id })
+                end
+            else
+                -- Normal hex selection for actions
+                GameScreen.selected_hex_index = hovered
+                GameScreen.action_menu_hex = hovered
+                local tile = HexTiles.get(hex.tile_id)
+                GameScreen.action_menu_visible = (tile and #tile.actions > 0)
+                log.info("game:hex_selected", { hex_index = hovered, tile_id = hex.tile_id })
+            end
         end
     else
-        -- Click outside - close menu
+        -- Click outside - close menu and clear item selection
         GameScreen.action_menu_visible = false
         GameScreen.selected_hex_index = nil
+        ItemPlacement.clear()
     end
 end
 

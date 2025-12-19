@@ -160,6 +160,18 @@ function love.load()
         screen_manager.go_to("menu")
     end)
     
+    -- Wire world map to game screen
+    bus.subscribe("world_map:start_game", function(payload)
+        log.info("world_map:start_game", payload)
+        screen_manager.go_to("game", { slot = payload.slot, location = payload.location })
+    end)
+    
+    -- Wire load game to game screen
+    bus.subscribe("load_game:load_slot", function(payload)
+        log.info("load_game:load_slot", payload)
+        screen_manager.go_to("game", { slot = payload.slot })
+    end)
+    
     -- Wire test events for HTTP/JSON testing
     if test_http_json_available then
         bus.subscribe("test:start", function(payload)

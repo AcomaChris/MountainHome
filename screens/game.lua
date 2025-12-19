@@ -193,6 +193,25 @@ function GameScreen.enter(ctx)
         end),
         UIButton.new("Next Month", w - btn_w - 20, h - 60, btn_w, btn_h, function()
             if GameScreen.game_data and not GameScreen.showing_weather_card then
+                -- Process growth for the month that just ended (using current weather)
+                if GameScreen.game_data.weather_effects and GameScreen.game_data.hex_map_data then
+                    local TileGrowth = require('lib.tile_growth')
+                    GameScreen.game_data.hex_map_data = TileGrowth.process_growth(
+                        GameScreen.game_data.hex_map_data,
+                        GameScreen.game_data.weather_effects
+                    )
+                    
+                    -- Update HexMap with new tile states (match by q/r coordinates)
+                    for _, hex_data in ipairs(GameScreen.game_data.hex_map_data) do
+                        for i, hex in ipairs(HexMap.hexes) do
+                            if hex.q == hex_data.q and hex.r == hex_data.r then
+                                HexMap.set_tile(i, hex_data.tile_id)
+                                break
+                            end
+                        end
+                    end
+                end
+                
                 -- Draw weather card for new month
                 local season = GameScreen.game_data.season or "Spring"
                 local location_id = GameScreen.game_data.location

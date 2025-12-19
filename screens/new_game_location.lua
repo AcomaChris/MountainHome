@@ -85,8 +85,11 @@ function WorldMapScreen.enter(ctx)
                 return
             end
             
-            -- Create new game state
-            local game_state = create_new_game_state(WorldMapScreen.selected_location)
+            -- Create new game state using GameState module
+            local GameState = require('lib.game_state')
+            local game_state = GameState.create_new(WorldMapScreen.selected_location.id)
+            game_state.location_name = WorldMapScreen.selected_location.name
+            game_state.difficulty = WorldMapScreen.selected_location.difficulty
             
             -- Save to slot
             local saved = SaveSystem.save_game(slot, game_state)

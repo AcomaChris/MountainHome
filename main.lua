@@ -226,6 +226,148 @@ function love.load()
         log.info("cheat:nosaves_executed", { note = "All save slots deleted" })
     end)
     
+    -- Register HoboDev Resources toggle cheat (unlocked by hobodev)
+    cheat_system.register("hobodevresources", "HoboDev Resources", "toggle", function(enabled)
+        -- Give resources periodically when enabled (can be extended later)
+        if enabled then
+            log.info("cheat:hobodevresources_enabled", { note = "HoboDev resources cheat enabled" })
+        else
+            log.info("cheat:hobodevresources_disabled", { note = "HoboDev resources cheat disabled" })
+        end
+    end)
+    
+    -- Register McJaggy cheat (toggle)
+    local HexCharacters = require('lib.hex_characters')
+    local MCJAGGY_MESSAGES = {
+        "THE MOUNTAINS ARE CALLING!",
+        "FRESH AIR AND WIDE OPEN SPACES!",
+        "NOTHING BEATS MOUNTAIN LIVING!",
+        "EVERY DAY IS AN ADVENTURE UP HERE!",
+        "THE VIEWS FROM THESE MOUNTAINS ARE INCREDIBLE!",
+        "MOUNTAIN LIFE IS THE BEST LIFE!",
+        "CAN'T BEAT THE PEACE AND QUIET!",
+        "THESE MOUNTAINS ARE MY HOME!",
+        "MOUNTAIN AIR IS THE BEST AIR!",
+        "LIVING AMONGST NATURE IS AMAZING!",
+        "THE MOUNTAINS NEVER GET OLD!",
+        "EVERY SEASON BRINGS NEW BEAUTY!",
+        "MOUNTAIN LIVING KEEPS YOU STRONG!",
+        "THERE'S NOWHERE ELSE I'D RATHER BE!",
+        "THE MOUNTAINS TEACH YOU PATIENCE!",
+        "MOUNTAIN LIFE IS SIMPLE AND GOOD!",
+        "THESE PEAKS ARE MY PLAYGROUND!",
+        "MOUNTAIN LIVING IS FREEDOM!",
+        "THE WILDS CALL TO MY SOUL!",
+        "MOUNTAINS MAKE YOU FEEL ALIVE!",
+    }
+    cheat_system.register("mcjaggy", "McJaggy", "toggle", function(enabled)
+        if enabled then
+            HexCharacters.spawn("RAW/Sprites/Char_McJaggy_Idle00.png", "McJaggy", MCJAGGY_MESSAGES, 2.0, 2.0)
+            log.info("cheat:mcjaggy_spawned", { note = "McJaggy spawned on hex map" })
+        else
+            HexCharacters.remove("McJaggy")
+            log.info("cheat:mcjaggy_removed", { note = "McJaggy removed from hex map" })
+        end
+    end)
+    
+    -- Register Disapproval cheat (toggle)
+    local DISAPPROVAL_MESSAGES = {
+        "This hex could use more organization...",
+        "The spacing here is all wrong...",
+        "This layout is inefficient at best...",
+        "Things would be better if arranged differently...",
+        "The placement here leaves much to be desired...",
+        "This could be optimized so much better...",
+        "The design here is... lacking...",
+        "There's a better way to do this...",
+        "This arrangement is suboptimal...",
+        "Things could be so much more efficient...",
+        "The organization here is questionable...",
+        "This setup needs improvement...",
+        "There's room for better planning here...",
+        "The structure could be more logical...",
+        "This layout lacks proper consideration...",
+        "Things would flow better if reorganized...",
+        "The placement strategy here is weak...",
+        "This could be arranged more thoughtfully...",
+        "The design principles are being ignored...",
+        "There's a more elegant solution here...",
+    }
+    cheat_system.register("disapproval", "Disapproval", "toggle", function(enabled)
+        if enabled then
+            HexCharacters.spawn("RAW/Sprites/Char_DMeowchi_Idle00.png", "Disapproval Meowchi", DISAPPROVAL_MESSAGES, 0.5, 4.0)
+            log.info("cheat:disapproval_spawned", { note = "Disapproval Meowchi spawned on hex map" })
+        else
+            HexCharacters.remove("Disapproval Meowchi")
+            log.info("cheat:disapproval_removed", { note = "Disapproval Meowchi removed from hex map" })
+        end
+    end)
+    
+    -- Register hobodev cheat code (button that activates everything)
+    local KyleCharacter = require('lib.kyle_character')
+    cheat_system.register("hobodev", "HoboDev", "button", function()
+        -- Give 100 of each resource if in game
+        local screen_manager = require('lib.screen_manager')
+        local current_screen = screen_manager.current_name()
+        
+        if current_screen == "game" then
+            local game_screen = require('screens.game')
+            if game_screen.game_data and game_screen.game_data.resources then
+                local resources = game_screen.game_data.resources
+                resources.wood = (resources.wood or 0) + 100
+                resources.money = (resources.money or 0) + 100
+                resources.stone = (resources.stone or 0) + 100
+                resources.fruit = (resources.fruit or 0) + 100
+                resources.vegetables = (resources.vegetables or 0) + 100
+                resources.meat = (resources.meat or 0) + 100
+                
+                -- Save game if slot exists
+                if game_screen.current_slot then
+                    SaveSystem.save_game(game_screen.current_slot, game_screen.game_data)
+                end
+                
+                log.info("cheat:hobodev_resources", { note = "Added 100 of each resource" })
+            end
+        end
+        
+        -- Unlock the HoboDev Resources toggle cheat (mark as discovered)
+        if not cheat_system.is_discovered("hobodevresources") then
+            -- Mark as discovered by directly updating the cheat system
+            local discovered_file = "saved/cheats.json"
+            local json = require('lunajson')
+            local info = love.filesystem.getInfo(discovered_file)
+            local discovered = {}
+            local toggles = {}
+            if info then
+                local contents = love.filesystem.read(discovered_file)
+                if contents then
+                    local ok, data = pcall(json.decode, contents)
+                    if ok and data then
+                        discovered = data.discovered or {}
+                        toggles = data.toggles or {}
+                    end
+                end
+            end
+            discovered["hobodevresources"] = true
+            toggles["hobodevresources"] = false  -- Start disabled
+            love.filesystem.createDirectory("saved")
+            local data = {
+                discovered = discovered,
+                toggles = toggles,
+            }
+            love.filesystem.write(discovered_file, json.encode(data))
+            -- Reload discovered cheats
+            cheat_system.init()
+            log.info("cheat:hobodevresources_unlocked", { note = "HoboDev Resources cheat unlocked" })
+        end
+        
+        -- Spawn Kyle
+        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+        KyleCharacter.spawn(w, h)
+        
+        log.info("cheat:hobodev_executed", { note = "HoboDev cheat activated" })
+    end)
+    
     -- Subscribe to cheat activation events to show notifications
     bus.subscribe("cheat:activated", function(payload)
         notification.show("Cheat " .. payload.name .. " activated!", 3.0, {0.9, 0.7, 0.3})
@@ -240,11 +382,19 @@ end
 function love.update(dt)
     screen_manager.update(dt)
     notification.update(dt)
+    
+    -- Update Kyle character if active
+    local KyleCharacter = require('lib.kyle_character')
+    KyleCharacter.update(dt)
 end
 
 function love.draw()
     screen_manager.draw()
     notification.draw()
+    
+    -- Draw Kyle character if active (on top of everything)
+    local KyleCharacter = require('lib.kyle_character')
+    KyleCharacter.draw()
 end
 
 function love.keypressed(key, scancode, isrepeat)

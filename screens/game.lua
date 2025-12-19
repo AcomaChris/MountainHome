@@ -238,6 +238,10 @@ function GameScreen.update(dt)
     if not GameScreen.showing_weather_card then
         local mx, my = love.mouse.getPosition()
         HexMap.update_hover(mx, my)
+        
+        -- Update hex characters
+        local HexCharacters = require('lib.hex_characters')
+        HexCharacters.update(dt)
     end
 end
 
@@ -382,6 +386,7 @@ function GameScreen.draw()
     
     -- Draw characters on map (always visible when not showing weather card)
     if not GameScreen.showing_weather_card then
+        -- Draw inventory characters
         for _, char in ipairs(GameScreen.characters_on_map) do
             if char.sprite then
                 local bob = math.sin(love.timer.getTime() * 7) * 4
@@ -397,6 +402,10 @@ function GameScreen.draw()
                 )
             end
         end
+        
+        -- Draw hex characters (cheat-spawned characters)
+        local HexCharacters = require('lib.hex_characters')
+        HexCharacters.draw()
     end
     
     -- Draw inventory panel if visible

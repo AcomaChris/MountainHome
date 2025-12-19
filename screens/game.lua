@@ -9,6 +9,8 @@ local GameState = require('lib.game_state')
 local HexTiles = require('lib.hex_tiles')
 local HexMap = require('lib.hex_map')
 local Maps = require('data.maps')
+local Weather = require('lib.weather')
+local WeatherCard = require('lib.weather_card')
 local log = require('lib.logger')
 local text_utils = require('lib.text_utils')
 
@@ -20,6 +22,8 @@ local GameScreen = {
     action_menu_visible = false,
     action_menu_hex = nil,
     current_slot = nil,  -- Store current save slot
+    showing_weather_card = false,  -- Weather card is visible
+    weather_card_dismissed = false,  -- Weather card has been revealed and can be dismissed
 }
 
 -- Initialize hex tiles and maps (call once)
@@ -54,26 +58,8 @@ function GameScreen.enter(ctx)
                 GameScreen.game_data.max_action_points = GameState.STARTING_ACTION_POINTS
             end
             
-            -- Load hex map for this location
-            -- Use saved map data if available, otherwise load from Maps
-            local map_data = nil
-            if GameScreen.game_data.hex_map_data then
-                map_data = GameScreen.game_data.hex_map_data
-            else
-                map_data = Maps.get(GameScreen.game_data.location)
-                -- Save initial map data
-                GameScreen.game_data.hex_map_data = map_data
-            end
-            
-            if map_data then
-                HexMap.create_from_data(map_data)
-            else
-                -- Fallback: create empty map
-                HexMap.create_from_data({})
-            end
-            
             log.info("game:entered", { 
-                slot = slot, 
+                slot = GameScreen.current_slot, 
                 location = GameScreen.game_data.location,
                 month = GameScreen.game_data.month 
             })
@@ -85,14 +71,59 @@ function GameScreen.enter(ctx)
     
     GameScreen.selected_hex_index = nil
     GameScreen.action_menu_visible = false
+    GameScreen.showing_weather_card = false
+    GameScreen.weather_card_dismissed = false
+    WeatherCard.hide()
     
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    
+    -- Load hex map after we have screen dimensions
+    if GameScreen.game_data then
+        local map_data = nil
+        if GameScreen.game_data.hex_map_data then
+            map_data = GameScreen.game_data.hex_map_data
+        else
+            map_data = Maps.get(GameScreen.game_data.location)
+            -- Save initial map data
+            GameScreen.game_data.hex_map_data = map_data
+        end
+        
+        -- Calculate top margin (timeline + info panel)
+        local top_margin = 60 + 50  -- Timeline height + info panel height
+        
+        if map_data then
+            HexMap.create_from_data(map_data, w, h, top_margin)
+        else
+            -- Fallback: create empty map
+            HexMap.create_from_data({}, w, h, top_margin)
+        end
+    end
     local btn_w, btn_h = 220, 44
     
     GameScreen.buttons = {
         UIButton.new("Next Month", w - btn_w - 20, h - 60, btn_w, btn_h, function()
-            if GameScreen.game_data then
+            if GameScreen.game_data and not GameScreen.showing_weather_card then
+                -- Draw weather card for new month
+                local season = GameScreen.game_data.season or "Spring"
+                local weather = Weather.draw_for_season(season)
+                
+                -- Store weather in game state
+                GameScreen.game_data.current_weather = weather.id
+                GameScreen.game_data.weather_name = weather.name
+                
+                -- Show weather card
+                WeatherCard.show(weather, w, h)
+                GameScreen.showing_weather_card = true
+                GameScreen.weather_card_dismissed = false
+                
+                log.info("game:weather_drawn", { season = season, weather = weather.id, month = GameScreen.game_data.month })
+            elseif GameScreen.showing_weather_card and GameScreen.weather_card_dismissed then
+                -- Weather card is revealed and dismissed - advance month
                 GameState.advance_month(GameScreen.game_data)
+                WeatherCard.hide()
+                GameScreen.showing_weather_card = false
+                GameScreen.weather_card_dismissed = false
+                
                 -- Save game after month advance
                 if GameScreen.current_slot then
                     SaveSystem.save_game(GameScreen.current_slot, GameScreen.game_data)
@@ -113,9 +144,16 @@ end
 function GameScreen.update(dt)
     if not GameScreen.game_data then return end
     
-    -- Update hex map hover
-    local mx, my = love.mouse.getPosition()
-    HexMap.update_hover(mx, my)
+    -- Update weather card animation
+    if GameScreen.showing_weather_card then
+        WeatherCard.update(dt)
+    end
+    
+    -- Update hex map hover (only if weather card not showing)
+    if not GameScreen.showing_weather_card then
+        local mx, my = love.mouse.getPosition()
+        HexMap.update_hover(mx, my)
+    end
 end
 
 function GameScreen.draw()
@@ -165,9 +203,27 @@ function GameScreen.draw()
     )
     love.graphics.printf(text_utils.clean(resource_text), info_x, resource_y, w - 20, "left")
     
-    -- Draw hex map
-    local hover_animation_time = love.timer.getTime() * 2
-    for i, hex in ipairs(HexMap.hexes) do
+    -- Draw weather card overlay if showing
+    if GameScreen.showing_weather_card then
+        -- Darken background
+        love.graphics.setColor(0, 0, 0, 0.7)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+        
+        -- Draw weather card
+        WeatherCard.draw()
+        
+        -- Draw dismiss instruction if revealed
+        if WeatherCard.revealed and WeatherCard.flip_progress >= 1.0 then
+            GameScreen.weather_card_dismissed = true
+            love.graphics.setColor(1, 1, 1, 0.8)
+            love.graphics.printf("Click 'Next Month' to continue", 0, h - 100, w, "center")
+        end
+    end
+    
+    -- Draw hex map (only if weather card not showing)
+    if not GameScreen.showing_weather_card then
+        local hover_animation_time = love.timer.getTime() * 2
+        for i, hex in ipairs(HexMap.hexes) do
         local tile = HexTiles.get(hex.tile_id)
         if not tile then
             tile = HexTiles.get("blank")
@@ -202,7 +258,7 @@ function GameScreen.draw()
         end
     end
     
-    -- Draw action menu if hex is selected
+    -- Draw action menu if hex is selected (only if weather card not showing)
     if GameScreen.action_menu_visible and GameScreen.action_menu_hex then
         local hex = HexMap.get_hex(GameScreen.action_menu_hex)
         if hex then
@@ -237,21 +293,51 @@ function GameScreen.draw()
             end
         end
     end
+    end  -- Close "if not GameScreen.showing_weather_card" for hex map drawing
     
-    -- Draw buttons
-    for _, btn in ipairs(GameScreen.buttons) do
-        btn:draw()
+    -- Draw buttons (disable "Next Month" button if weather card is showing but not dismissed)
+    for i, btn in ipairs(GameScreen.buttons) do
+        if i == 1 and GameScreen.showing_weather_card and not GameScreen.weather_card_dismissed then
+            -- Dim the button when weather card is showing
+            local old_bg = btn.bg
+            local old_fg = btn.fg
+            btn.bg = {old_bg[1] * 0.5, old_bg[2] * 0.5, old_bg[3] * 0.5}
+            btn.fg = {old_fg[1] * 0.5, old_fg[2] * 0.5, old_fg[3] * 0.5}
+            btn:draw()
+            btn.bg = old_bg
+            btn.fg = old_fg
+        else
+            btn:draw()
+        end
     end
 end
 
 function GameScreen.mousepressed(x, y, button)
     if button ~= 1 then return end
     
-    -- Check buttons first
-    for _, btn in ipairs(GameScreen.buttons) do
-        if btn:mousepressed(x, y) then
+    -- Check weather card click first
+    if GameScreen.showing_weather_card and not WeatherCard.revealed then
+        if WeatherCard.contains(x, y) then
+            WeatherCard.reveal()
+            log.info("game:weather_revealed", { weather = WeatherCard.weather and WeatherCard.weather.id })
             return
         end
+    end
+    
+    -- Check buttons first (but disable "Next Month" if weather card showing and not dismissed)
+    for i, btn in ipairs(GameScreen.buttons) do
+        if i == 1 and GameScreen.showing_weather_card and not GameScreen.weather_card_dismissed then
+            -- Button is disabled - don't process click
+        else
+            if btn:mousepressed(x, y) then
+                return
+            end
+        end
+    end
+    
+    -- Don't process hex clicks if weather card is showing
+    if GameScreen.showing_weather_card then
+        return
     end
     
     -- Check action menu clicks first

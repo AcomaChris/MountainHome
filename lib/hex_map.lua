@@ -67,10 +67,49 @@ function HexMap.find_hovered_hex(mx, my)
     return nil
 end
 
+-- Calculate center offset for hex grid based on screen size
+-- @param screen_w number: Screen width
+-- @param screen_h number: Screen height
+-- @param top_margin number: Space at top (for timeline, etc.)
+function HexMap.calculate_center_offset(screen_w, screen_h, top_margin)
+    top_margin = top_margin or 0
+    
+    -- Calculate hex grid bounds (without offset)
+    local min_x, max_x = math.huge, -math.huge
+    local min_y, max_y = math.huge, -math.huge
+    
+    for q = -HexMap.GRID_RADIUS, HexMap.GRID_RADIUS do
+        local r1 = math.max(-HexMap.GRID_RADIUS, -q - HexMap.GRID_RADIUS)
+        local r2 = math.min(HexMap.GRID_RADIUS, -q + HexMap.GRID_RADIUS)
+        for r = r1, r2 do
+            local x = HexMap.HEX_SPACING_X * (q * 1.5)
+            local y = HexMap.HEX_SPACING_Y * (r + q * 0.5)
+            min_x = math.min(min_x, x)
+            max_x = math.max(max_x, x)
+            min_y = math.min(min_y, y)
+            max_y = math.max(max_y, y)
+        end
+    end
+    
+    -- Calculate center offset to center the grid on screen
+    local grid_width = max_x - min_x
+    local grid_height = max_y - min_y
+    HexMap.OFFSET_X = (screen_w - grid_width) / 2 - min_x
+    HexMap.OFFSET_Y = top_margin + (screen_h - top_margin - grid_height) / 2 - min_y
+end
+
 -- Create a map from tile data
 -- @param tile_data table: Array of {q, r, tile_id} for each hex
-function HexMap.create_from_data(tile_data)
+-- @param screen_w number: Screen width (optional, for centering)
+-- @param screen_h number: Screen height (optional, for centering)
+-- @param top_margin number: Top margin for UI (optional)
+function HexMap.create_from_data(tile_data, screen_w, screen_h, top_margin)
     HexMap.hexes = {}
+    
+    -- Calculate center offset if screen dimensions provided
+    if screen_w and screen_h then
+        HexMap.calculate_center_offset(screen_w, screen_h, top_margin)
+    end
     
     for _, data in ipairs(tile_data) do
         local x, y = HexMap.hex_to_pixel(data.q, data.r)
